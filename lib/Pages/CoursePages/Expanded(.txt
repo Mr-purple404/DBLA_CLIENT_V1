@@ -1,0 +1,50 @@
+//  Expanded(
+//           child: SingleChildScrollView(
+//             child: Container(
+//               color: Kwhite,
+//               height: screenSize.height * 0.28,
+//             //   child: Column(
+//             //     children: [
+//             //       Padding(
+//             //         padding: const EdgeInsets.all(8.0),
+//             //         child: Row(
+//             //           children: [
+//             //             Icon(
+//             //               Icons.location_pin,
+//             //               color: Colors.red,
+//             //               size: 40,
+//             //             ),
+//             //             Expanded(
+//             //                 child: Text(
+//             //               'Où livrer votre colis ?',
+//             //               style: TextStyle(fontFamily: 'Poppins', fontSize: 20),
+//             //             )),
+//             //           ],
+//             //         ),
+//             //       ),
+//             //       Padding(
+//             //         padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+//             //         child: TextField(
+//             //           // controller: _searchController,
+//             //           onChanged: (query) {
+//             //             if (query.isNotEmpty) {
+//             //               // searchPlace(query);
+//             //             } else {
+//             //               setState(() {
+//             //                 // searchResults = [];
+//             //               });
+//             //             }
+//             //           },
+//             //           decoration: InputDecoration(
+//             //               hintText: 'Entrez un lieu',
+//             //               prefixIcon: Icon(Icons.search),
+//             //               border: OutlineInputBorder(
+//             //                   borderRadius:
+//             //                       BorderRadius.all(Radius.circular(50)))),
+//             //         ),
+//             //       ),
+//             //     ],
+//             //   ),
+//             ),
+//           ),
+//         )
