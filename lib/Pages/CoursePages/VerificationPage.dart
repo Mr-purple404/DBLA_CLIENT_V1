@@ -1,29 +1,30 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison
 
 import 'dart:convert';
 
 import 'package:d_bla_client_v1/Constants/Constant.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/RaceModel.dart';
-import 'package:d_bla_client_v1/Pages/CoursePages/VerificationPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-class RacePage extends StatefulWidget {
-  const RacePage({
+class VerificationPage extends StatefulWidget {
+  const VerificationPage({
     super.key,
   });
 
   @override
-  State<RacePage> createState() => _RacePageState();
+  State<VerificationPage> createState() => _VerificationPageState();
 }
 
-class _RacePageState extends State<RacePage> {
+class _VerificationPageState extends State<VerificationPage> {
   TextEditingController searchController = TextEditingController();
+  LatLng? latLng;
+  LatLng? latLng200;
   Position? currentPosition;
   List<Marker> markers = [];
   List<Marker> markerInit = [];
@@ -89,113 +90,74 @@ class _RacePageState extends State<RacePage> {
   }
 
   // geocoding api  --debut
-  Future<void> goePlace(String namePlace) async {
-    final String apiUrl =
-        "https://api.mapbox.com/geocoding/v5/mapbox.places/$namePlace.json?limit=1&access_token=pk.eyJ1Ijoid3Vhc3MiLCJhIjoiY2xtNTBpZmc1MWc1ejNqczZoeWw3bnh1dyJ9.RofiqR1hTvyAys4YHibAWQ";
-    final response = await http.get(Uri.parse(apiUrl));
-    if (response.statusCode == 200) {
-      final placeinfo = json.decode(response.body);
-      setState(() {
-        placeInfo = placeinfo['features'];
-      });
 
-      // print(' donneer geocoder de $namePlace : $placeinfo');
+  // geocoding api  --fin
 
-      if (mapControllerM != null && placeInfo.isNotEmpty) {
-        double latitude = placeInfo[0]['geometry']['coordinates'][1];
-        double longitude = placeInfo[0]['geometry']['coordinates'][0];
-        // print("latitude : $latitude");
-        mapControllerM.move(LatLng(latitude, longitude), 14.0);
+  LatLng position1 =
+      LatLng(0.0, 0.0); // Variable pour stocker la LatLng récupérée
+  LatLng position2 = LatLng(0.0, 0.0);
+  final storage = FlutterSecureStorage();
+  Future<void> _loadLatLngFromStorage() async {
+    try {
+      final latitudeString = await storage.read(key: 'position_20');
+      final longitudeString = await storage.read(key: 'position_10');
 
-        if (!pos1Vald) {
-          markers.clear();
-          markers.add(
-            Marker(
-              width: 80.0,
-              height: 80.0,
-              point: LatLng(latitude, longitude),
-              builder: (ctx) => Container(
-                child: Icon(
-                  Icons.location_on,
-                  size: 30,
-                  color: Colors.red,
-                ),
-              ),
-            ),
-          );
-          final markerPixelPos =
-              mapControllerM.latLngToScreenPoint(LatLng(latitude, longitude));
-          infoWindowTop = markerPixelPos!.y - 122;
-          if (infoWindowTop < 0) {
-            // Si la fenêtre d'information est en dehors de l'écran vers le haut,
-            // réajustez la position pour qu'elle soit juste en dessous du marqueur
-            infoWindowTop =
-                markerPixelPos.y + 10; // Ajustez la valeur en conséquence
-          }
-          isInfoWindowVisible = true;
-          var lat2 = LatLng(latitude, longitude).latitude;
-          var long2 = LatLng(latitude, longitude).longitude;
-          val1 = LatLng(lat2, long2);
-          viewInfoAdresse(lat2, long2);
-        } else {
-          if (!pos2Vald) {
-            markerInit.clear();
+      if (latitudeString != null && longitudeString != null) {
+        final latitude = double.tryParse(latitudeString);
+        final longitude = double.tryParse(longitudeString);
 
-            markerInit.add(
-              Marker(
-                width: 80.0,
-                height: 80.0,
-                point: LatLng(latitude, longitude),
-                builder: (ctx) => Container(
-                  child: Icon(
-                    Icons.location_on,
-                    size: 30,
-                    color: Colors.green,
-                  ),
-                ),
-              ),
-            );
-            // final markerPixelPos = mapControllerM
-            //     .latLngToScreenPoint(latLng);
-            // infoWindowTop = markerPixelPos!.x - 100;
-            final markerPixelPos =
-                mapControllerM.latLngToScreenPoint(LatLng(latitude, longitude));
-            infoWindowTop = markerPixelPos!.y - 122;
-            if (infoWindowTop < 0) {
-              // Si la fenêtre d'information est en dehors de l'écran vers le haut,
-              // réajustez la position pour qu'elle soit juste en dessous du marqueur
-              infoWindowTop =
-                  markerPixelPos.y + 10; // Ajustez la valeur en conséquence
-            }
-            isInfoWindowVisible = true;
-            var lat1 = LatLng(latitude, longitude).latitude;
-            var long1 = LatLng(latitude, longitude).longitude;
-            val1 = LatLng(lat1, long1);
-
-            viewInfoAdresse(lat1, long1);
-            // valeur stoker
-          }
+        if (latitude != null && longitude != null) {
+          setState(() {
+            latLng = LatLng(latitude, longitude);
+            position1 = latLng!;
+          });
+          print('position14464646: $position1');
         }
       }
-    } else {
-      print(' erreur code : ${response.statusCode}');
+    } catch (e) {
+      print('Erreur lors de la récupération des données : $e');
     }
   }
-  // geocoding api  --fin
+
+  Future<void> _loadLatLngFromStorage2() async {
+    try {
+      final latitudeString1 = await storage.read(key: 'position_200');
+      final longitudeString1 = await storage.read(key: 'position_100');
+
+      if (latitudeString1 != null && longitudeString1 != null) {
+        final latitude100 = double.tryParse(latitudeString1);
+        final longitude100 = double.tryParse(longitudeString1);
+
+        if (latitude100 != null && longitude100 != null) {
+          setState(() {
+            latLng200 = LatLng(latitude100, longitude100);
+            position2 = latLng200!;
+          });
+          print('supper: $position2');
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de la récupération des données : $e');
+    }
+  }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getCurrentLocation();
+    // getPosition1FromStorage();
+    _loadLatLngFromStorage();
+    _loadLatLngFromStorage2();
   }
 
   void markerInitial() {
+    print("====$position1");
     markerInit.add(
       Marker(
         width: 80.0,
         height: 80.0,
-        point: center,
+        point: position1,
         builder: (ctx) => Container(
           child: Icon(
             Icons.location_on,
@@ -213,11 +175,13 @@ class _RacePageState extends State<RacePage> {
   }
 
   void markerInitial2() {
+    print('position2 = $position2');
+
     markers.add(
       Marker(
         width: 80.0,
         height: 80.0,
-        point: center,
+        point: position2,
         builder: (ctx) => Container(
           child: Icon(
             Icons.location_on,
@@ -234,24 +198,6 @@ class _RacePageState extends State<RacePage> {
   }
 
   List data = ["Maison", "bureau", "Maman H", "favorites"];
-
-  Future<void> searchPlace(String query) async {
-    // final String bbox = '-0.235,5.5,1.9,11.5';
-    final String endPoint =
-        'https://api.mapbox.com/search/searchbox/v1/suggest?q=$query&access_token=pk.eyJ1Ijoic2VhcmNoLW1hY2hpbmUtdXNlci0xIiwiYSI6ImNrNnJ6bDdzdzA5cnAza3F4aTVwcWxqdWEifQ.RFF7CVFKrUsZVrJsFzhRvQ&session_token=ec5c1e5c-ecf9-4a3b-8de5-73dc3bc22290&language=fr&limit=10&types=country%2Cregion%2Cdistrict%2Cpostcode%2Clocality%2Cplace%2Cneighborhood%2Caddress%2Cpoi%2Cstreet&proximity=1.2440902%2C6.1908137&country=tg&eta_type=navigation&origin=1.24412,6.190781';
-    final response = await http.get(Uri.parse(endPoint));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      setState(() {
-        searchResults = data['suggestions'];
-      });
-      print("statut code : ${response.statusCode}");
-      print("statut code : ${response.body}");
-    } else {
-      print("statut code : ${response.statusCode}");
-    }
-  }
 
   Future<void> viewInfoAdresse(double latitude, longitude) async {
     final urlApi =
@@ -272,37 +218,6 @@ class _RacePageState extends State<RacePage> {
           "les donnée recucupere grace a $longitude et $latitude sont = $request ");
     } else {
       print('Statut code = ${response.body}');
-    }
-  }
-
-// final storage = FlutterSecureStorage();
-  final storage = FlutterSecureStorage();
-
-  Future<void> storeDataInLocalStorage(
-      double position2Stocker7, double position2Stocker3) async {
-    try {
-      await storage.write(
-          key: "position_10", value: position2Stocker3.toString());
-      await storage.write(
-          key: "position_20", value: position2Stocker7.toString());
-      print('Données stockées avec succès sous la clé: $position2Stocker3');
-    } catch (e) {
-      print('Erreur lors de la sauvegarde des données: $e');
-    }
-  }
-
-  Future<void> storeDataInLocalStorage2(
-      double position2Stocker700, double position2Stocker300) async {
-    try {
-      await storage.write(
-          key: "position_100",
-          value: position2Stocker300.toString()); //longitude
-      await storage.write(
-          key: "position_200",
-          value: position2Stocker700.toString()); // latitude
-      print('Données stockées avec succès sous la clé: $position2Stocker300');
-    } catch (e) {
-      print('Erreur lors de la sauvegarde des données: $e');
     }
   }
 
@@ -333,85 +248,6 @@ class _RacePageState extends State<RacePage> {
                   : FlutterMap(
                       mapController: mapControllerM,
                       options: MapOptions(
-                        onTap: (details, latLng) {
-                          setState(() {
-                            if (!pos1Vald) {
-                              markers.clear();
-
-                              markers.add(
-                                Marker(
-                                  width: 80.0,
-                                  height: 80.0,
-                                  point: latLng,
-                                  builder: (ctx) => Container(
-                                    child: Icon(
-                                      Icons.location_on,
-                                      size: 30,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ),
-                              );
-                              final markerPixelPos =
-                                  mapControllerM.latLngToScreenPoint(latLng);
-                              infoWindowTop = markerPixelPos!.y - 122;
-                              if (infoWindowTop < 0) {
-                                // Si la fenêtre d'information est en dehors de l'écran vers le haut,
-                                // réajustez la position pour qu'elle soit juste en dessous du marqueur
-                                infoWindowTop = markerPixelPos.y +
-                                    10; // Ajustez la valeur en conséquence
-                              }
-
-                              isInfoWindowVisible = true;
-                              var lat2 = latLng.latitude;
-                              var long2 = latLng.longitude;
-                              val2 = LatLng(lat2, long2);
-                              storeDataInLocalStorage2(lat2, long2);
-                              viewInfoAdresse(lat2, long2);
-                            } else {
-                              // valeur stoker; // valeur stoker
-
-                              if (!pos2Vald) {
-                                markerInit.clear();
-
-                                markerInit.add(
-                                  Marker(
-                                    width: 80.0,
-                                    height: 80.0,
-                                    point: latLng,
-                                    builder: (ctx) => Container(
-                                      child: Icon(
-                                        Icons.location_on,
-                                        size: 30,
-                                        color: Colors.green,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                                // final markerPixelPos = mapControllerM
-                                //     .latLngToScreenPoint(latLng);
-                                // infoWindowTop = markerPixelPos!.x - 100;
-                                final markerPixelPos =
-                                    mapControllerM.latLngToScreenPoint(latLng);
-                                infoWindowTop = markerPixelPos!.y - 122;
-                                if (infoWindowTop < 0) {
-                                  // Si la fenêtre d'information est en dehors de l'écran vers le haut,
-                                  // réajustez la position pour qu'elle soit juste en dessous du marqueur
-                                  infoWindowTop = markerPixelPos.y +
-                                      10; // Ajustez la valeur en conséquence
-                                }
-                                isInfoWindowVisible = true;
-                                var lat1 = latLng.latitude;
-                                var long1 = latLng.longitude;
-                                val1 = LatLng(lat1, long1);
-                                storeDataInLocalStorage(lat1, long1);
-
-                                viewInfoAdresse(lat1, long1);
-                                // valeur stoker
-                              }
-                            }
-                          });
-                        },
                         center: center,
                       ),
                       children: [
@@ -515,31 +351,13 @@ class _RacePageState extends State<RacePage> {
                         ),
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                          child: Container(
-                            height: screenSize.height / 15,
-                            decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(50))),
-                            child: TextField(
-                              controller: searchController,
-                              onChanged: (query) {
-                                if (query.isNotEmpty) {
-                                  searchPlace(query);
-                                } else {
-                                  setState(() {
-                                    searchResults = [];
-                                  });
-                                }
-                              },
-                              decoration: InputDecoration(
-                                  hintText: '',
-                                  prefixIcon: Icon(Icons.search),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(50)))),
-                            ),
-                          ),
+                          // child: Container(
+                          //   height: screenSize.height / 15,
+                          //   decoration: BoxDecoration(
+                          //       color: Colors.grey.shade300,
+                          //       borderRadius:
+                          //           BorderRadius.all(Radius.circular(50))),
+                          // ),
                         ),
                         if (searchController.text.isEmpty)
                           Column(
@@ -736,14 +554,7 @@ class _RacePageState extends State<RacePage> {
                                                               10.0), // Définir la forme du bouton ici
                                                     ),
                                                   ),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              VerificationPage()),
-                                                    );
-                                                  },
+                                                  onPressed: () {},
                                                   child:
                                                       Text('Valider course')),
                                             )
@@ -787,7 +598,7 @@ class _RacePageState extends State<RacePage> {
                                     children: [
                                       InkWell(
                                         onTap: () {
-                                          goePlace(name);
+                                          // goePlace(name);
                                           searchController.text = "";
                                           focusNode.unfocus();
                                         },

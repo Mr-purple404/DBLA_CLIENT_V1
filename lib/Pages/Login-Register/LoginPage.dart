@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
           body: dataLogin,
         );
         final Map<String, dynamic> result = json.decode(response.body);
-        final storageLogin = const FlutterSecureStorage();
+        const storageLogin = FlutterSecureStorage();
         if (response.statusCode == 200 || response.statusCode == 201) {
           if (result['access'] != "") {
             final String accessToken = result['access'];

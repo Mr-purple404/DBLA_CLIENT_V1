@@ -206,7 +206,10 @@ class _FirstPageState extends State<FirstPage> {
                       Padding(padding: EdgeInsets.only(right: 8)),
                       InkWell(
                         onTap: () {
-                          print('Enora tap');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => RacePage()),
+                          );
                         },
                         child: Container(
                           height: screenSize.height * 0.15,
