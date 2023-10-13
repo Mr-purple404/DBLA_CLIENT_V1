@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   var message = "";
   Future<void> validDate() async {
     try {
-      const String apiToken = "http://192.168.1.71:8080/client/token";
+      const String apiToken = "http://$ipAdress:8080/client/token";
       if (mailController.text.isEmpty) {
         setState(() {
           message = 'Veuillez remplir le champs email';
@@ -48,9 +48,11 @@ class _LoginPageState extends State<LoginPage> {
         if (response.statusCode == 200 || response.statusCode == 201) {
           if (result['access'] != "") {
             final String accessToken = result['access'];
+            final int idUser = result['user']["id"];
             final String username = mailController.text;
             await storageLogin.write(key: 'access_token', value: accessToken);
             await storageLogin.write(key: 'user_name', value: username);
+            await storageLogin.write(key: 'id_User', value: idUser.toString());
 
             debugPrint(' access token :$accessToken');
             // ignore: use_build_context_synchronously

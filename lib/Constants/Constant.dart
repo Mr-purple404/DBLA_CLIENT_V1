@@ -15,9 +15,12 @@ const kBoxColor = Color(0XFF92A7BCCC);
 const sizebox10 = SizedBox(height: 10);
 const sizebox20 = SizedBox(height: 20);
 const sizebox30 = SizedBox(height: 30);
-const ipAdress = "192.168.1.72";
+const ipAdress = "192.168.1.71";
 Size calculateScreenSize(BuildContext context) {
   double screenHeight = MediaQuery.of(context).size.height;
   double screenWidth = MediaQuery.of(context).size.width;
   return Size(screenWidth, screenHeight);
 }
+
+const kstatusboxcolor = Color(0XFFFFCB74);
+const kstatusbtncolor = Color(0XFFE85B31);

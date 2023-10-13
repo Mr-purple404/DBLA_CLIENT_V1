@@ -1,10 +1,11 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers, use_build_context_synchronously
 
 import 'dart:convert';
 
 import 'package:d_bla_client_v1/Constants/Constant.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/CommandePage.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/RaceModel.dart';
+import 'package:d_bla_client_v1/Pages/CoursePages/courseAccepte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -59,7 +60,7 @@ class _FirstPageState extends State<FirstPage> {
 
   Future<void> getTypeofActivity() async {
     try {
-      const String apiUrl = "http://192.168.1.71:8080/dbapp/type/";
+      const String apiUrl = "http://$ipAdress:8080/dbapp/type/";
       var response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         setState(() {
@@ -80,7 +81,9 @@ class _FirstPageState extends State<FirstPage> {
     final storage = FlutterSecureStorage();
     final String? accessToken = await storage.read(key: 'access_token');
     final String? username = await storage.read(key: 'user_name');
+    final String? idUser = await storage.read(key: 'id_User');
     print('token principal: $accessToken');
+    print('id principal: $idUser');
     print(
         'nom principal: $username'); // Ajoutez cette ligne pour afficher dans le débogueur
   }
@@ -140,7 +143,14 @@ class _FirstPageState extends State<FirstPage> {
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: InkWell(
-                                  onTap: () {
+                                  onTap: () async {
+                                    final storage = FlutterSecureStorage();
+                                    await storage.delete(key: 'position_200');
+                                    await storage.delete(key: 'position_20');
+                                    await storage.delete(key: 'position_100');
+                                    await storage.delete(key: 'position_10');
+
+                                    print('Tokens removed from local storage');
                                     print("ouverture de page en cours");
                                     // globalVariableModel.setRaceId(idRace);
                                     globalVariableModel.setIdRace(idRace);
@@ -166,7 +176,7 @@ class _FirstPageState extends State<FirstPage> {
                                       //   "http://192.168.1.71:8000/" + logo,
                                       // ),
                                       child: Image.network(
-                                          "http://192.168.1.71:8080/" + logo),
+                                          "http://$ipAdress:8080/$logo"),
                                     ),
                                   ),
                                 ),
@@ -183,7 +193,11 @@ class _FirstPageState extends State<FirstPage> {
                     children: [
                       InkWell(
                         onTap: () {
-                          print('Sodjigaz tap');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AcceptRacePage()),
+                          );
                         },
                         child: Container(
                           height: screenSize.height * 0.15,

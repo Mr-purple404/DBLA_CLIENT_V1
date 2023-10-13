@@ -9,23 +9,24 @@ import 'package:d_bla_client_v1/Pages/CoursePages/RaceModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:full_screen_image/full_screen_image.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+// ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
+import 'package:full_screen_image/full_screen_image.dart';
 
-class VerificationPage extends StatefulWidget {
-  const VerificationPage({
+class ConfirmPage extends StatefulWidget {
+  const ConfirmPage({
     super.key,
   });
 
   @override
-  State<VerificationPage> createState() => _VerificationPageState();
+  State<ConfirmPage> createState() => _ConfirmPageState();
 }
 
-class _VerificationPageState extends State<VerificationPage> {
+class _ConfirmPageState extends State<ConfirmPage> {
   TextEditingController searchController = TextEditingController();
   LatLng? latLng;
   LatLng? latLng200;
@@ -36,7 +37,7 @@ class _VerificationPageState extends State<VerificationPage> {
   LatLng center = LatLng(0.0, 0.0);
   LatLng val1 = LatLng(0.0, 0.0);
   LatLng val2 = LatLng(0.0, 0.0);
-  List<dynamic> searchResults = []; // recherche tableau
+
   List<dynamic> placeInfo = []; // geocoding tableau
   List<dynamic> details = []; // geocoding tableau
   bool isLoading =
@@ -50,22 +51,7 @@ class _VerificationPageState extends State<VerificationPage> {
   double infoWindowTop = 0.0;
   final FocusNode focusNode = FocusNode();
   var placename = "";
-  // text et icon
-  // debut
-//  ion et text e changeable si on valide une position
-  var iconCustommer = Icon(
-    Icons.location_pin,
-    color: Colors.red,
-    size: 40,
-  );
-  var custommerText = "Où livrer votre colis ?";
-  var iconMe = Icon(
-    Icons.location_pin,
-    color: Colors.green,
-    size: 40,
-  );
-  var textMe = "Adresse de départ";
-// fin
+
   Future<void> getCurrentLocation() async {
     final permission = await Geolocator.requestPermission();
 
@@ -137,7 +123,7 @@ class _VerificationPageState extends State<VerificationPage> {
             latLng200 = LatLng(latitude100, longitude100);
             position2 = latLng200!;
           });
-          print('supper: $position2');
+          print('super: $position2');
         }
       }
     } catch (e) {
@@ -208,6 +194,7 @@ class _VerificationPageState extends State<VerificationPage> {
     );
   }
 
+  bool? ischecked = false;
   @override
   void initState() {
     // TODO: implement initState
@@ -332,43 +319,6 @@ class _VerificationPageState extends State<VerificationPage> {
                         MarkerLayer(
                           markers: markers,
                         ),
-                        if (isInfoWindowVisible)
-                          Positioned(
-                            top: infoWindowTop,
-                            left: 10,
-                            right: 10,
-                            child: Container(
-                              width: screenSize.width / 4,
-                              decoration: BoxDecoration(
-                                // color: kBoxColor,
-                                borderRadius: BorderRadius.circular(15.0),
-                                color: Colors.white,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          placename,
-                                          style: TextStyle(color: Colors.black),
-                                        ),
-                                        Spacer(),
-                                        IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                isInfoWindowVisible = false;
-                                              });
-                                            },
-                                            icon: Icon(Icons.close))
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
                       ],
                     ),
             ),
@@ -407,56 +357,60 @@ class _VerificationPageState extends State<VerificationPage> {
                           child: Row(
                             children: [
                               Expanded(
-                                flex: 1,
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'Distance',
-                                      style: TextStyle(fontFamily: 'Poppins'),
-                                    ),
-                                    Container(
-                                      height: screenSize.height / 15,
-                                      width: screenSize.width / 4,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(50))),
-                                      child: TextField(
-                                        controller: searchController,
-                                        decoration: InputDecoration(
-                                            hintText: '',
-                                            border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(50)))),
-                                      ),
-                                    ),
-                                  ],
+                                flex: 2,
+                                child: Container(
+                                  height: screenSize.height / 15,
+                                  width: screenSize.width / 3,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(50))),
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                          value: ischecked,
+                                          activeColor: kFormColor,
+                                          // tristate: true,
+                                          onChanged: (newBool) {
+                                            setState(() {
+                                              ischecked = newBool;
+                                              // print(
+                                              //     "La valeur de ischecked a été modifiée : $ischecked");
+                                            });
+                                          }),
+                                      const Text(
+                                        "Utiliser un code promo",
+                                        style: TextStyle(fontFamily: 'Poppins'),
+                                      )
+                                    ],
+                                  ),
                                 ),
                               ),
                               // Padding(padding: EdgeInsets.all(8.0)),
 
                               Expanded(
-                                flex: 2,
+                                flex: 1,
                                 child: Column(
                                   children: [
-                                    Text(
-                                      "Estimation",
-                                      style: TextStyle(fontFamily: 'Poppins'),
-                                    ),
-                                    Container(
-                                      height: screenSize.height / 15,
-                                      width: screenSize.width / 2.5,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(50))),
-                                      child: TextField(
-                                        controller: searchController,
-                                        decoration: InputDecoration(
-                                            hintText: '',
-                                            border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(50)))),
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 5.0),
+                                      child: Container(
+                                        height: screenSize.height / 15,
+                                        width: screenSize.width / 3,
+                                        decoration: BoxDecoration(
+                                            color: Colors.grey.shade300,
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(50))),
+                                        child: TextField(
+                                          controller: searchController,
+                                          decoration: InputDecoration(
+                                              hintText: 'code promo',
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(
+                                                              50)))),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -476,9 +430,46 @@ class _VerificationPageState extends State<VerificationPage> {
                                     right: 10.0,
                                     top: 8.0,
                                     bottom: 4.0),
-                                child: Text(
-                                  "Cette estimation peut légèrement varier selon de  l’état de la circulation",
-                                  style: TextStyle(fontFamily: 'Poppins'),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 10.0),
+                                        child: Text(
+                                          "Estimation en kilomètre",
+                                          style:
+                                              TextStyle(fontFamily: 'Poppins'),
+                                        ),
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    Expanded(
+                                        flex: 1,
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(right: 5.0),
+                                          child: Container(
+                                            height: screenSize.height / 15,
+                                            width: screenSize.width / 3,
+                                            decoration: BoxDecoration(
+                                                color: Colors.grey.shade300,
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(50))),
+                                            child: TextField(
+                                              controller: searchController,
+                                              decoration: InputDecoration(
+                                                  hintText: '8km',
+                                                  border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  50)))),
+                                            ),
+                                          ),
+                                        ))
+                                  ],
                                 ),
                               ),
                             ),
@@ -498,32 +489,26 @@ class _VerificationPageState extends State<VerificationPage> {
                                         Padding(
                                           padding:
                                               const EdgeInsets.only(left: 8.0),
-                                          child: InkWell(
-                                            child: Container(
-                                              height: screenSize.height / 5,
-                                              width: screenSize.width / 3,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade300,
-                                              ),
-                                              child: imagepath != null
-                                                  ? FullScreenWidget(
-                                                      backgroundColor:
-                                                          Colors.red,
-                                                      backgroundIsTransparent:
-                                                          true,
-                                                      disposeLevel:
-                                                          DisposeLevel.High,
-                                                      child: Image.file(
-                                                        imagepath!,
-                                                        fit: BoxFit.cover,
-                                                      ))
-                                                  : InkWell(
-                                                      onTap: () {
-                                                        showdialog();
-                                                      },
-                                                      child:
-                                                          Icon(Icons.camera)),
+                                          child: Container(
+                                            height: screenSize.height / 5,
+                                            width: screenSize.width / 3,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade300,
                                             ),
+                                            child: imagepath != null
+                                                ? FullScreenWidget(
+                                                    backgroundColor: Colors.red,
+                                                    backgroundIsTransparent:
+                                                        true,
+                                                    disposeLevel:
+                                                        DisposeLevel.High,
+                                                    child:
+                                                        Image.file(imagepath!))
+                                                : InkWell(
+                                                    onTap: () {
+                                                      showdialog();
+                                                    },
+                                                    child: Icon(Icons.camera)),
                                           ),
                                         ),
                                       ],
@@ -535,10 +520,12 @@ class _VerificationPageState extends State<VerificationPage> {
                                     flex: 2,
                                     child: Column(
                                       children: [
-                                        Text(
-                                          "course programée",
-                                          style:
-                                              TextStyle(fontFamily: 'Poppins'),
+                                        InkWell(
+                                          child: Text(
+                                            "course programée",
+                                            style: TextStyle(
+                                                fontFamily: 'Poppins'),
+                                          ),
                                         ),
                                         Container(
                                           height: screenSize.height / 15,
@@ -566,23 +553,7 @@ class _VerificationPageState extends State<VerificationPage> {
                             ),
                             SizedBox(
                               width: screenSize.width,
-                              height: screenSize.height * 0.20 * 0.70,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextFormField(
-                                  minLines: 2,
-                                  maxLines: 3,
-                                  keyboardType: TextInputType.multiline,
-                                  decoration: InputDecoration(
-                                      hintText: 'Note au livreur',
-                                      hintStyle: TextStyle(
-                                        fontFamily: 'Poppins1',
-                                      ),
-                                      border: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Kwhite))),
-                                ),
-                              ),
+                              height: screenSize.height * 0.20 * 0.20,
                             ),
                             SizedBox(
                               width: screenSize.width * 0.75,
@@ -600,15 +571,15 @@ class _VerificationPageState extends State<VerificationPage> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                ConfirmPage()),
-                                      );
+                                      // Navigator.push(
+                                      //   context,
+                                      //   MaterialPageRoute(
+                                      //       builder: (context) =>
+                                      //           ConfirmPage()),
+                                      // );
                                     },
                                     child: Text(
-                                      ' Confirmer',
+                                      ' Lancer la course',
                                       style: TextStyle(
                                           fontFamily: 'Poppins', fontSize: 25),
                                     )),

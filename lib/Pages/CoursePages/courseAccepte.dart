@@ -1,35 +1,23 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
+// ignore_for_file: prefer_const_constructors
 
 import 'package:d_bla_client_v1/Constants/Constant.dart';
 import 'package:d_bla_client_v1/Pages/MainPages/DrawerPage.dart';
-import 'package:d_bla_client_v1/Pages/MainPages/FirstPage.dart';
-import 'package:d_bla_client_v1/Pages/MainPages/Settings.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class AcceptRacePage extends StatefulWidget {
+  const AcceptRacePage({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<AcceptRacePage> createState() => _AcceptRacePageState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _AcceptRacePageState extends State<AcceptRacePage> {
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  int selectIndex = 0;
-  void _navigateBottom(int index) {
-    setState(() {
-      selectIndex = index;
-    });
-  }
-
-  final List<Widget> pages = [
-    FirstPage(),
-    SettingPage(),
-  ];
   @override
   Widget build(BuildContext context) {
     Size screenSize = calculateScreenSize(context);
+
     return Scaffold(
       key: scaffoldKey,
       backgroundColor: KPrimaryColor,
@@ -69,32 +57,43 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           Expanded(
-            child: pages[selectIndex],
+            child: SingleChildScrollView(
+              child: Container(
+                height: screenSize.height * 0.75,
+                width: screenSize.width,
+                decoration: BoxDecoration(
+                    color: Kwhite,
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(kraduis),
+                        topRight: Radius.circular(kraduis))),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: screenSize.height * 0.15 * 0.4,
+                      width: screenSize.width,
+                      child: Row(
+                        children: [
+                          IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: Icon(Icons.arrow_back)),
+                          Center(
+                            child: Text(
+                              "Livraison immediate",
+                              style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: screenSize.height * 0.15 * 0.15),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ), // Affiche la page sélectionnée
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: KPrimaryColor,
-          unselectedItemColor: Colors.blueGrey,
-          fixedColor: Kwhite,
-          currentIndex: selectIndex,
-          onTap: _navigateBottom,
-          type: BottomNavigationBarType.fixed,
-          items: [
-            BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.home,
-                  size: 30,
-                ),
-                label: 'Home'.toUpperCase()),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.history,
-                size: 30,
-              ),
-              label: 'historique'.toUpperCase(),
-            ),
-          ]),
       endDrawer: drawerPrincipale(context, screenSize),
     );
   }

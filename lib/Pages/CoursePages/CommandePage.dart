@@ -3,13 +3,13 @@
 import 'dart:convert';
 
 import 'package:d_bla_client_v1/Constants/Constant.dart';
-import 'package:d_bla_client_v1/Pages/CoursePages/RaceModel.dart';
+// import 'package:d_bla_client_v1/Pages/CoursePages/RaceModel.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/VerificationPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -522,6 +522,7 @@ class _RacePageState extends State<RacePage> {
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(50))),
                             child: TextField(
+                              focusNode: focusNode,
                               controller: searchController,
                               onChanged: (query) {
                                 if (query.isNotEmpty) {
@@ -590,7 +591,6 @@ class _RacePageState extends State<RacePage> {
                                       borderRadius: BorderRadius.all(
                                           Radius.circular(50))),
                                   child: TextField(
-                                    focusNode: focusNode,
                                     // controller: searchController,
                                     decoration: InputDecoration(
                                       prefixIcon: Icon(
