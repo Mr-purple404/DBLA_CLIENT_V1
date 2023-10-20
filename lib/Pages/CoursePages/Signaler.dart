@@ -37,7 +37,7 @@ class _ReportPageState extends State<ReportPage> {
 
   Future<void> sendReport() async {
     try {
-      const String apiReport = "http://$ipAdress:8080/client/report/";
+      const String apiReport = "http://$ipAdress:8080/dbapp/report/";
       if (reportController.text.isEmpty) {
         setState(() {
           message = "Veuillez remplir le champ avant d'envoyer ";

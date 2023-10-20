@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "429995690637",
+    "project_id": "dblaclient2023",
+    "storage_bucket": "dblaclient2023.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429995690637:android:e2ee54a9b7e5d5492ef0c4",
+        "android_client_info": {
+          "package_name": "com.example.d_bla_client_v1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVam2jSlba9UUrZSmDphSk8_nBeCMD368"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
