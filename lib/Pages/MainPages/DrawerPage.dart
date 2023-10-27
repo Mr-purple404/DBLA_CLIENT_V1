@@ -3,6 +3,8 @@
 import 'package:d_bla_client_v1/Constants/Constant.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/Signaler.dart';
 import 'package:flutter/material.dart';
+
+import '../CoursePages/Drawers/SettingsPage.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 Drawer drawerPrincipale(BuildContext context, Size screenSize) {
@@ -63,16 +65,15 @@ Drawer drawerPrincipale(BuildContext context, Size screenSize) {
         ),
         Divider(),
         ListTile(
-          // onTap: () async {
-          // try {
-          //   final storage = FlutterSecureStorage();
-          //   await storage.delete(key: 'access_token');
-
-          //   print('Tokens removed from local storage');
-          // } catch (e) {
-          //   print(e);
-          // }
-          // },
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SettingsPage(),
+                fullscreenDialog: true,
+              ),
+            );
+          },
           leading: Icon(
             Icons.settings,
             size: 35,

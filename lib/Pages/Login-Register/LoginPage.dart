@@ -21,6 +21,8 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController mailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   var message = "";
+  final storageLogin = FlutterSecureStorage();
+
   Future<void> validDate() async {
     try {
       const String apiToken = "http://$ipAdress:8080/client/token";
@@ -35,45 +37,52 @@ class _LoginPageState extends State<LoginPage> {
         });
         _showSnackbar(context, message);
       } else {
-        final Map<String, String> dataLogin = {
-          'username': mailController.text,
-          'password': passwordController.text,
-        };
-        final response = await http.post(
-          Uri.parse(apiToken),
-          body: dataLogin,
-        );
-        final Map<String, dynamic> result = json.decode(response.body);
-        const storageLogin = FlutterSecureStorage();
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          if (result['access'] != "") {
-            final String accessToken = result['access'];
-            final int idUser = result['user']["id"];
-            final String username = mailController.text;
-            await storageLogin.write(key: 'access_token', value: accessToken);
-            await storageLogin.write(key: 'user_name', value: username);
-            await storageLogin.write(key: 'id_User', value: idUser.toString());
+        final String? instanceToken =
+            await storageLogin.read(key: 'instance_token');
+        if (instanceToken != null) {
+          final Map<String, String> dataLogin = {
+            'username': mailController.text,
+            'password': passwordController.text,
+            "instance_token": instanceToken
+          };
+          final response = await http.post(
+            Uri.parse(apiToken),
+            body: dataLogin,
+          );
+          final Map<String, dynamic> result = json.decode(response.body);
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            if (result['access'] != "") {
+              final String accessToken = result['access'];
+              final int idUser = result['user']["id"];
+              final String username = mailController.text;
+              await storageLogin.write(key: 'access_token', value: accessToken);
+              await storageLogin.write(key: 'user_name', value: username);
+              await storageLogin.write(
+                  key: 'id_User', value: idUser.toString());
 
-            debugPrint(' access token :$accessToken');
-            // ignore: use_build_context_synchronously
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => HomeScreen(),
-                fullscreenDialog: true,
-              ),
-            );
+              debugPrint(' access token :$accessToken');
+              // ignore: use_build_context_synchronously
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HomeScreen(),
+                  fullscreenDialog: true,
+                ),
+              );
+            }
+          } else {
+            if (response.statusCode == 401) {
+              setState(() {
+                message = "identifant incorrect";
+              });
+              print(response.statusCode);
+              _showSnackbar(context, message);
+            } else {
+              debugPrint("code d'erreur reccupéré  : ${response.statusCode}");
+            }
           }
         } else {
-          if (response.statusCode == 401) {
-            setState(() {
-              message = "identifant incorrect";
-            });
-            print(response.statusCode);
-            _showSnackbar(context, message);
-          } else {
-            debugPrint("code d'erreur reccupéré  : ${response.statusCode}");
-          }
+          debugPrint('token inexistant => $instanceToken');
         }
       }
     } catch (error) {

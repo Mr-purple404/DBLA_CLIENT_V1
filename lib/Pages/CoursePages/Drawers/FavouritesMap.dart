@@ -13,16 +13,34 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-class RacePage extends StatefulWidget {
-  const RacePage({
+class Addfavorite {
+  final double latitude;
+  final double longitude;
+  final String name;
+  final String adresse;
+
+  Addfavorite(this.latitude, this.longitude, this.name, this.adresse);
+
+  Map<String, dynamic> toJson() {
+    return {
+      'latitude': latitude,
+      'longitude': longitude,
+      'name': name,
+      'adresse': adresse,
+    };
+  }
+}
+
+class FavoriteMapPage extends StatefulWidget {
+  const FavoriteMapPage({
     super.key,
   });
 
   @override
-  State<RacePage> createState() => _RacePageState();
+  State<FavoriteMapPage> createState() => _FavoriteMapPageState();
 }
 
-class _RacePageState extends State<RacePage> {
+class _FavoriteMapPageState extends State<FavoriteMapPage> {
   TextEditingController searchController = TextEditingController();
   Position? currentPosition;
   List<Marker> markers = [];
@@ -45,20 +63,7 @@ class _RacePageState extends State<RacePage> {
   double infoWindowTop = 0.0;
   final FocusNode focusNode = FocusNode();
   var placename = "";
-  // text et icon
-  // debut
-//  ion et text e changeable si on valide une position
-  var iconCustommer = Icon(
-    Icons.location_pin,
-    color: Colors.red,
-    size: 40,
-  );
-  var custommerText = "Où livrer votre colis ?";
-  var iconMe = Icon(
-    Icons.location_pin,
-    color: Colors.green,
-    size: 40,
-  );
+
   var textMe = "Adresse de départ";
 // fin
   Future<void> getCurrentLocation() async {
@@ -85,7 +90,6 @@ class _RacePageState extends State<RacePage> {
     print(" centre : $center");
     print(" position : $currentPosition");
     markerInitial2();
-    markerInitial();
   }
 
   // geocoding api  --debut
@@ -101,7 +105,7 @@ class _RacePageState extends State<RacePage> {
 
       // print(' donneer geocoder de $namePlace : $placeinfo');
 
-      if (mapControllerM != null && placeInfo.isNotEmpty) {
+      if (placeInfo.isNotEmpty) {
         double latitude = placeInfo[0]['geometry']['coordinates'][1];
         double longitude = placeInfo[0]['geometry']['coordinates'][0];
         // print("latitude : $latitude");
@@ -127,8 +131,6 @@ class _RacePageState extends State<RacePage> {
               mapControllerM.latLngToScreenPoint(LatLng(latitude, longitude));
           infoWindowTop = markerPixelPos!.y - 122;
           if (infoWindowTop < 0) {
-            // Si la fenêtre d'information est en dehors de l'écran vers le haut,
-            // réajustez la position pour qu'elle soit juste en dessous du marqueur
             infoWindowTop =
                 markerPixelPos.y + 10; // Ajustez la valeur en conséquence
           }
@@ -137,45 +139,7 @@ class _RacePageState extends State<RacePage> {
           var long2 = LatLng(latitude, longitude).longitude;
           val2 = LatLng(lat2, long2);
           viewInfoAdresse(lat2, long2);
-        } else {
-          if (!pos2Vald) {
-            markerInit.clear();
-
-            markerInit.add(
-              Marker(
-                width: 80.0,
-                height: 80.0,
-                point: LatLng(latitude, longitude),
-                builder: (ctx) => Container(
-                  child: Icon(
-                    Icons.location_on,
-                    size: 30,
-                    color: Colors.green,
-                  ),
-                ),
-              ),
-            );
-            // final markerPixelPos = mapControllerM
-            //     .latLngToScreenPoint(latLng);
-            // infoWindowTop = markerPixelPos!.x - 100;
-            final markerPixelPos =
-                mapControllerM.latLngToScreenPoint(LatLng(latitude, longitude));
-            infoWindowTop = markerPixelPos!.y - 122;
-            if (infoWindowTop < 0) {
-              // Si la fenêtre d'information est en dehors de l'écran vers le haut,
-              // réajustez la position pour qu'elle soit juste en dessous du marqueur
-              infoWindowTop =
-                  markerPixelPos.y + 10; // Ajustez la valeur en conséquence
-            }
-            isInfoWindowVisible = true;
-            var lat1 = LatLng(latitude, longitude).latitude;
-            var long1 = LatLng(latitude, longitude).longitude;
-            val1 = LatLng(lat1, long1);
-
-            viewInfoAdresse(lat1, long1);
-            // valeur stoker
-          }
-        }
+        } else {}
       }
     } else {
       print(' erreur code : ${response.statusCode}');
@@ -188,28 +152,6 @@ class _RacePageState extends State<RacePage> {
     // TODO: implement initState
     super.initState();
     getCurrentLocation();
-  }
-
-  void markerInitial() {
-    markerInit.add(
-      Marker(
-        width: 80.0,
-        height: 80.0,
-        point: center,
-        builder: (ctx) => Container(
-          child: Icon(
-            Icons.location_on,
-            size: 30,
-            color: Colors.green,
-          ),
-        ),
-      ),
-    );
-    setState(() {
-      pos1Vald = false;
-      pos2Vald = false;
-    });
-    // print(" center : $centering");
   }
 
   void markerInitial2() {
@@ -306,6 +248,65 @@ class _RacePageState extends State<RacePage> {
     }
   }
 
+// fonction pour ajouter une postion favorite
+// == debut ===/
+  var message = "";
+  TextEditingController favController =
+      TextEditingController(); // controller pour le champ du nom du lieu
+  Future<void> addFavorite(double latitudeF, double longitudeF, String nameF,
+      String adresseF) async {
+    try {
+      if (favController.text.isEmpty) {
+        setState(() {
+          message = "Veuillez donnée un nom a votre position";
+        });
+        _showSnackbar(context, message);
+      } else {
+        const String apiFav = "http://$ipAdress:8080/dbapp/location/";
+        final String? accessToken = await storage.read(key: 'access_token');
+        if (accessToken != null) {
+          final Map<String, String> headers = {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          };
+          final favData = Addfavorite(latitudeF, longitudeF, nameF, adresseF);
+          final jsonData = favData.toJson();
+          final response = await http.post(Uri.parse(apiFav),
+              headers: headers, body: jsonEncode(jsonData));
+
+          final Map<String, dynamic> result = json.decode(response.body);
+
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            debugPrint('la reponse retourné est => $result');
+            setState(() {
+              message = "Position enregistrer avec succès";
+              favController.text = "";
+            });
+
+            // ignore: use_build_context_synchronously
+            _showSnackbar(context, message);
+          } else {
+            debugPrint('Status code => ${response.statusCode}');
+          }
+        } else {}
+      }
+    } catch (error) {
+      debugPrint('erreur ue lors de la capture de l\'api => $error');
+    }
+  }
+
+// == fin ===/
+  // snackbar debut
+  void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  // snackbar fin
   @override
   Widget build(BuildContext context) {
     Size screenSize = calculateScreenSize(context);
@@ -365,50 +366,13 @@ class _RacePageState extends State<RacePage> {
                               isInfoWindowVisible = true;
                               var lat2 = latLng.latitude;
                               var long2 = latLng.longitude;
+                              print("latitude=>$lat2");
+                              print("longitude=>$long2");
                               val2 = LatLng(lat2, long2);
                               storeDataInLocalStorage2(lat2, long2);
                               viewInfoAdresse(lat2, long2);
                             } else {
                               // valeur stoker; // valeur stoker
-
-                              if (!pos2Vald) {
-                                markerInit.clear();
-
-                                markerInit.add(
-                                  Marker(
-                                    width: 80.0,
-                                    height: 80.0,
-                                    point: latLng,
-                                    builder: (ctx) => Container(
-                                      child: Icon(
-                                        Icons.location_on,
-                                        size: 30,
-                                        color: Colors.green,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                                // final markerPixelPos = mapControllerM
-                                //     .latLngToScreenPoint(latLng);
-                                // infoWindowTop = markerPixelPos!.x - 100;
-                                final markerPixelPos =
-                                    mapControllerM.latLngToScreenPoint(latLng);
-                                infoWindowTop = markerPixelPos!.y - 122;
-                                if (infoWindowTop < 0) {
-                                  // Si la fenêtre d'information est en dehors de l'écran vers le haut,
-                                  // réajustez la position pour qu'elle soit juste en dessous du marqueur
-                                  infoWindowTop = markerPixelPos.y +
-                                      10; // Ajustez la valeur en conséquence
-                                }
-                                isInfoWindowVisible = true;
-                                var lat1 = latLng.latitude;
-                                var long1 = latLng.longitude;
-                                val1 = LatLng(lat1, long1);
-                                storeDataInLocalStorage(lat1, long1);
-
-                                viewInfoAdresse(lat1, long1);
-                                // valeur stoker
-                              }
                             }
                           });
                         },
@@ -422,9 +386,6 @@ class _RacePageState extends State<RacePage> {
                             'accessToken':
                                 'pk.eyJ1Ijoid3Vhc3MiLCJhIjoiY2xtNTBpZmc1MWc1ejNqczZoeWw3bnh1dyJ9.RofiqR1hTvyAys4YHibAWQ',
                           },
-                        ),
-                        MarkerLayer(
-                          markers: markerInit,
                         ),
                         MarkerLayer(
                           markers: markers,
@@ -485,9 +446,9 @@ class _RacePageState extends State<RacePage> {
                         ))),
               )),
           DraggableScrollableSheet(
-              initialChildSize: 0.5,
-              maxChildSize: 0.6,
-              minChildSize: 0.5,
+              initialChildSize: 0.4,
+              maxChildSize: 0.4,
+              minChildSize: 0.2,
               builder:
                   (BuildContext context, ScrollController scrollcontroller) {
                 return Padding(
@@ -499,20 +460,6 @@ class _RacePageState extends State<RacePage> {
                       controller: scrollcontroller,
                       physics: ClampingScrollPhysics(),
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              iconCustommer,
-                              Expanded(
-                                  child: Text(
-                                custommerText,
-                                style: TextStyle(
-                                    fontFamily: 'Poppins', fontSize: 20),
-                              )),
-                            ],
-                          ),
-                        ),
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0, right: 8.0),
                           child: Container(
@@ -545,214 +492,53 @@ class _RacePageState extends State<RacePage> {
                         if (searchController.text.isEmpty)
                           Column(
                             children: [
-                              SizedBox(
-                                height: screenSize.height * 0.20 * 0.50,
-                                width: screenSize.width,
-                                child: ListView.builder(
-                                    itemCount: data.length,
-                                    scrollDirection: Axis.horizontal,
-                                    itemBuilder: (context, index) {
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(15.0),
-                                        ),
-                                        margin: EdgeInsets.all(8.0),
-                                        height: screenSize.height * 0.20 * 0.25,
-                                        width: screenSize.width / 3.5,
-                                        child: Row(
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 3.0, right: 1.0),
-                                              child: Icon(
-                                                Icons.favorite,
-                                                color: KPrimaryColor,
-                                              ),
-                                            ),
-                                            Text(data[index]),
-                                          ],
-                                        ),
-                                      );
-                                    }),
-                              ),
-                              Center(
-                                  child: Text(
-                                'Numéro du destinataire',
-                                style: TextStyle(fontFamily: 'Poppins'),
-                              )),
+                              sizebox20,
                               Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 8.0, right: 8.0, bottom: 10.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade400,
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(50))),
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  height: screenSize.height * 0.20 * 0.30,
+                                  width: screenSize.width,
                                   child: TextField(
-                                    // controller: searchController,
+                                    controller: favController,
                                     decoration: InputDecoration(
-                                      prefixIcon: Icon(
-                                        Icons.phone_android,
-                                        color: Colors.green,
-                                        size: 35,
-                                      ),
-                                      hintText: '98647161',
-                                      hintStyle: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(50))),
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 60.0),
-                                    ),
+                                        hintText: 'Entrez un nom ',
+                                        border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(50)))),
                                   ),
                                 ),
                               ),
+                              sizebox20,
                               SizedBox(
-                                width: screenSize.width,
-                                height: screenSize.height * 0.20 * 0.80,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                        flex: 2,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(5.0),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: kBoxColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(15.0),
-                                            ),
-                                            width: screenSize.width * 0.60,
-                                            height:
-                                                screenSize.height * 0.20 * 0.80,
-                                            child: Row(
-                                              children: [
-                                                SizedBox(
-                                                    child: Column(
-                                                  children: [
-                                                    Text("Lomé-$placename"),
-                                                    Text("Lomé-$placename"),
-                                                  ],
-                                                )),
-                                                Spacer(),
-                                                IconButton(
-                                                    onPressed: null,
-                                                    icon: Icon(Icons.close))
-                                              ],
-                                            ),
-                                          ),
-                                        )),
-                                    Padding(
-                                        padding: EdgeInsets.only(right: 5.0)),
-                                    Expanded(
-                                        child: Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      child: Column(
-                                        children: [
-                                          if (!pos1Vald)
-                                            SizedBox(
-                                              height: screenSize.height *
-                                                  0.20 *
-                                                  0.70,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: kbtnColor,
-                                                  foregroundColor: kBlack,
-                                                  elevation:
-                                                      4, // Définir l'élévation ici
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0), // Définir la forme du bouton ici
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    pos1Vald = true;
-                                                    iconCustommer = iconMe;
-                                                    custommerText = textMe;
-                                                    pos2Vald = false;
-                                                  });
-                                                },
-                                                child: Text(
-                                                  'confirmer',
-                                                  style:
-                                                      TextStyle(fontSize: 12),
-                                                ),
-                                              ),
-                                            ),
-                                          if (pos1Vald && pos2Vald == false)
-                                            SizedBox(
-                                              height: screenSize.height *
-                                                  0.20 *
-                                                  0.70,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: kbtnColor,
-                                                  foregroundColor: kBlack,
-                                                  elevation:
-                                                      4, // Définir l'élévation ici
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0), // Définir la forme du bouton ici
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    pos1Vald = true;
-                                                    pos2Vald = true;
-                                                  });
-                                                },
-                                                child: Text(
-                                                  'confirmer',
-                                                  style:
-                                                      TextStyle(fontSize: 12),
-                                                ),
-                                              ),
-                                            ),
-                                          if (pos1Vald && pos2Vald == true)
-                                            SizedBox(
-                                              height: screenSize.height *
-                                                  0.20 *
-                                                  0.70,
-                                              child: ElevatedButton(
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor: kbtnColor,
-                                                    foregroundColor: kBlack,
-                                                    elevation:
-                                                        4, // Définir l'élévation ici
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0), // Définir la forme du bouton ici
-                                                    ),
-                                                  ),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              VerificationPage()),
-                                                    );
-                                                  },
-                                                  child:
-                                                      Text('Valider course')),
-                                            )
-                                        ],
+                                width: screenSize.width * 0.75,
+                                height: screenSize.height * 0.20 * 0.40,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 5.0),
+                                  child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: kbtnColor,
+                                        foregroundColor: kBlack,
+                                        elevation: 4, // Définir l'élévation ici
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              10.0), // Définir la forme du bouton ici
+                                        ),
                                       ),
-                                    )),
-                                  ],
+                                      onPressed: () {
+                                        addFavorite(
+                                            val2.latitude,
+                                            val2.longitude,
+                                            favController.text,
+                                            placename);
+                                      },
+                                      child: Text(
+                                        'Enregistrer',
+                                        style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 23),
+                                      )),
                                 ),
-                              ),
+                              )
                             ],
                           ),
                         if (searchResults.isNotEmpty)
