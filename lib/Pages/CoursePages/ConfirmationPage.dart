@@ -131,6 +131,27 @@ class _ConfirmPageState extends State<ConfirmPage> {
     }
   }
 
+  var distanceF = "";
+  var slugF = "";
+  Future<void> loadVal() async {
+    try {
+      final distance = await storage.read(key: 'distanceStocker');
+      final slug = await storage.read(key: 'slug');
+
+      if (distance != null && slug != null) {
+        setState(() {
+          distanceF = distance;
+          slugF = slug;
+        });
+        print("distance => $distance && slug => $slug");
+      } else {
+        print('Variable null');
+      }
+    } catch (e) {
+      print('Erreur lors de la récupération des données : $e');
+    }
+  }
+
   File? imagepath;
   ImagePicker imagePicker = ImagePicker();
 
@@ -203,6 +224,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
     // getPosition1FromStorage();
     _loadLatLngFromStorage();
     _loadLatLngFromStorage2();
+    loadVal();
   }
 
   void markerInitial() {
@@ -275,10 +297,82 @@ class _ConfirmPageState extends State<ConfirmPage> {
     }
   }
 
+  var message = '';
+  void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  Future<void> onload(int idE) async {
+    if (imagepath == null) {
+      print("Aucune image sélectionnée.");
+      setState(() {
+        message = 'Aucune image sélectionnée.';
+      });
+      _showSnackbar(context, message);
+    } else {
+      try {
+        final String? accessToken = await storage.read(key: 'access_token');
+
+        if (accessToken != null) {
+          final Map<String, String> headers = {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          };
+
+          String url = "http://$ipAdress:8080/client/tmppacketdelivery/";
+          var request = http.MultipartRequest('POST', Uri.parse(url));
+          request.headers.addAll(headers);
+          request.fields['distance'] = distanceF;
+          request.fields['slug'] = slugF;
+          request.fields['depature_latitude'] = position1.latitude.toString();
+          request.fields['depature_longitude'] = position1.longitude.toString();
+          request.fields['depature_adress'] = 'Bè-ahligo';
+          request.fields['depature_phone'] = "1234567";
+          request.fields['arrival_latitude'] = position2.latitude.toString();
+          request.fields['arrival_longitude'] = position2.longitude.toString();
+          request.fields['arrival_adress'] = 'grd Marché';
+          request.fields['arrival_phone'] = "1234567";
+          request.fields['engine'] = idE.toString();
+          request.fields['client'] = "1";
+
+          var imageFile =
+              await http.MultipartFile.fromPath('picture', imagepath!.path);
+          request.files.add(imageFile);
+
+          var response = await request.send();
+          if (response.statusCode == 200) {
+            var responseData = await response.stream.toBytes();
+            var responseString = utf8.decode(responseData);
+            print(responseString);
+
+            setState(() {
+              message = 'image uploader avec succès';
+              imagepath = null;
+            });
+            _showSnackbar(context, message);
+          } else {
+            var responseData = await response.stream.toBytes();
+            var responseString = utf8.decode(responseData);
+            print('StatusCode => ${response.statusCode} && ${responseString} ');
+          }
+        } else {
+          print('inexistant');
+        }
+      } catch (e) {
+        print('erreur reccuperer => $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = calculateScreenSize(context);
-    // final globalVariableModel = Provider.of<GlobalVariableModel>(context);
+    final globalVariableModel = Provider.of<GlobalVariableModel>(context);
     return Scaffold(
       // appBar: AppBar(),
       backgroundColor: KPrimaryColor,
@@ -571,12 +665,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      // Navigator.push(
-                                      //   context,
-                                      //   MaterialPageRoute(
-                                      //       builder: (context) =>
-                                      //           ConfirmPage()),
-                                      // );
+                                      onload(globalVariableModel.idRace);
                                     },
                                     child: Text(
                                       ' Lancer la course',

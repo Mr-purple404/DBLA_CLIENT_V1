@@ -45,7 +45,7 @@ class _SettingsPageState extends State<SettingsPage> {
         var response = await http.get(Uri.parse(apiUrl), headers: headers);
         if (response.statusCode == 200) {
           setState(() {
-            var jsonData = jsonDecode(response.body);
+            var jsonData = jsonDecode(utf8.decode(response.bodyBytes));
             favList = List<FavPostionClass>.from(jsonData['results']
                 .map((item) => FavPostionClass.fromJson(item)));
           });
@@ -58,6 +58,36 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     } catch (error) {
       debugPrint('Erreur lors de la recupperation de l\'api => $error');
+    }
+  }
+
+// == fin ==//
+// == debut fonction delete ==//
+  Future<void> deletePosition(int idDelete) async {
+    try {
+      final apiDelete = "http://$ipAdress:8080/dbapp/location/$idDelete/";
+      final String? accessTokenDelete = await storage.read(key: 'access_token');
+      if (accessTokenDelete != null) {
+        final Map<String, String> headers = {
+          'Authorization': 'Bearer $accessTokenDelete',
+          'Content-Type': 'application/json',
+        };
+        var response =
+            await http.delete(Uri.parse(apiDelete), headers: headers);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          setState(() {
+            message = "$idDelete supprimé avec succès";
+            getFavotiteList();
+          });
+          _showSnackbar(context, message);
+        } else {
+          debugPrint('Code erreur => ${response.statusCode}');
+        }
+      } else {
+        debugPrint('Tojken inexistant => $accessTokenDelete');
+      }
+    } catch (error) {
+      debugPrint("erreur recu lors de la capture de l'api delete => $error");
     }
   }
 // == fin ==//
@@ -256,7 +286,48 @@ class _SettingsPageState extends State<SettingsPage> {
                                                     BorderRadius.circular(10),
                                               ),
                                             ),
-                                            child: Column(),
+                                            child: Row(
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(0.0),
+                                                  child: SizedBox(
+                                                    width:
+                                                        screenSize.width * 0.4,
+                                                    height:
+                                                        screenSize.height * 0.1,
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceEvenly,
+                                                      children: [
+                                                        Text(
+                                                          "56RV + ${index + 9}HV",
+                                                          style: TextStyle(
+                                                              fontFamily:
+                                                                  'Poppins'),
+                                                        ),
+                                                        Text(
+                                                          adresse,
+                                                          style: TextStyle(
+                                                              fontFamily:
+                                                                  'Poppins'),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                Spacer(),
+                                                IconButton(
+                                                    onPressed: () {
+                                                      deletePosition(idPlace);
+                                                    },
+                                                    icon: Icon(
+                                                      Icons.close,
+                                                      size: 30,
+                                                    ))
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       )
@@ -267,7 +338,12 @@ class _SettingsPageState extends State<SettingsPage> {
                             }),
                       ),
                     ),
-                    Text("data")
+                    InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                            child: Text("revenir sur la page d'acceuil")))
                   ],
                 ),
               ),

@@ -15,7 +15,10 @@ const kBoxColor = Color(0xCC92A7BC);
 const sizebox10 = SizedBox(height: 10);
 const sizebox20 = SizedBox(height: 20);
 const sizebox30 = SizedBox(height: 30);
-const ipAdress = "192.168.1.69";
+const ipAdress = "192.168.1.68";
+const mapboxKey =
+    "pk.eyJ1Ijoid3Vhc3MiLCJhIjoiY2xtNTBpZmc1MWc1ejNqczZoeWw3bnh1dyJ9.RofiqR1hTvyAys4YHibAWQ";
+
 Size calculateScreenSize(BuildContext context) {
   double screenHeight = MediaQuery.of(context).size.height;
   double screenWidth = MediaQuery.of(context).size.width;

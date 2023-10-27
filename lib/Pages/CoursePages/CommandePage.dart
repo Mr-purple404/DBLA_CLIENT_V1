@@ -13,6 +13,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../MainPages/ClassFav.dart';
+
 class RacePage extends StatefulWidget {
   const RacePage({
     super.key,
@@ -61,6 +63,93 @@ class _RacePageState extends State<RacePage> {
   );
   var textMe = "Adresse de départ";
 // fin
+
+// debut favoris code
+  List<FavPostionClass> favList = []; // une liste pour l'extraction
+  Future<void> getFavoriteList() async {
+    try {
+      const String apiUrl = "http://$ipAdress:8080/dbapp/location/";
+      final String? accessToken = await storage.read(key: 'access_token');
+
+      if (accessToken != null) {
+        final Map<String, String> headers = {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        };
+        var response = await http.get(Uri.parse(apiUrl), headers: headers);
+        if (response.statusCode == 200) {
+          setState(() {
+            var jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+            favList = List<FavPostionClass>.from(jsonData['results']
+                .map((item) => FavPostionClass.fromJson(item)));
+          });
+          print(response.body);
+        } else {
+          print("Erreur : ${response.statusCode}");
+        }
+      } else {
+        print("token inexistant => $accessToken");
+      }
+    } catch (error) {
+      debugPrint('Erreur lors de la recupperation de l\'api => $error');
+    }
+  }
+
+  Future<void> tapFavorite(double latitude, double longitude) async {
+    if (latitude != 0.0 && longitude != 0.0) {
+      mapControllerM.move(LatLng(latitude, longitude), 14.0);
+
+      if (!pos1Vald) {
+        markers.clear();
+        markers.add(
+          Marker(
+            width: 80.0,
+            height: 80.0,
+            point: LatLng(latitude, longitude),
+            builder: (ctx) => Container(
+              child: Icon(
+                Icons.location_on,
+                size: 30,
+                color: Colors.red,
+              ),
+            ),
+          ),
+        );
+
+        var lat2 = LatLng(latitude, longitude).latitude;
+        var long2 = LatLng(latitude, longitude).longitude;
+        val2 = LatLng(lat2, long2);
+        storeDataInLocalStorage2(lat2, long2);
+      } else {
+        if (!pos2Vald) {
+          markerInit.clear();
+
+          markerInit.add(
+            Marker(
+              width: 80.0,
+              height: 80.0,
+              point: LatLng(latitude, longitude),
+              builder: (ctx) => Container(
+                child: Icon(
+                  Icons.location_on,
+                  size: 30,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+          );
+          var lat1 = LatLng(latitude, longitude).latitude;
+          var long1 = LatLng(latitude, longitude).longitude;
+          val1 = LatLng(lat1, long1);
+          storeDataInLocalStorage(lat1, long1);
+
+          // valeur stoker
+        }
+      }
+    }
+  }
+// fin favoris code
+
   Future<void> getCurrentLocation() async {
     final permission = await Geolocator.requestPermission();
 
@@ -188,6 +277,7 @@ class _RacePageState extends State<RacePage> {
     // TODO: implement initState
     super.initState();
     getCurrentLocation();
+    getFavoriteList();
   }
 
   void markerInitial() {
@@ -233,7 +323,7 @@ class _RacePageState extends State<RacePage> {
     });
   }
 
-  List data = ["Maison", "bureau", "Maman H", "favorites"];
+  // List data = ["Maison", "bureau", "Maman H", "favorites"];
 
   Future<void> searchPlace(String query) async {
     // final String bbox = '-0.235,5.5,1.9,11.5';
@@ -549,30 +639,47 @@ class _RacePageState extends State<RacePage> {
                                 height: screenSize.height * 0.20 * 0.50,
                                 width: screenSize.width,
                                 child: ListView.builder(
-                                    itemCount: data.length,
+                                    itemCount: favList.length,
                                     scrollDirection: Axis.horizontal,
                                     itemBuilder: (context, index) {
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(15.0),
-                                        ),
-                                        margin: EdgeInsets.all(8.0),
-                                        height: screenSize.height * 0.20 * 0.25,
-                                        width: screenSize.width / 3.5,
-                                        child: Row(
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 3.0, right: 1.0),
-                                              child: Icon(
-                                                Icons.favorite,
-                                                color: KPrimaryColor,
+                                      final result = favList[index];
+                                      final placeName = result.name;
+                                      final latitude = result.latitude;
+                                      final longitude = result.longitude;
+                                      final latitudeF = double.parse(latitude);
+                                      final longitudeF =
+                                          double.parse(longitude);
+                                      return InkWell(
+                                        onTap: () {
+                                          tapFavorite(latitudeF, longitudeF);
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade300,
+                                            borderRadius:
+                                                BorderRadius.circular(15.0),
+                                          ),
+                                          margin: EdgeInsets.all(8.0),
+                                          height:
+                                              screenSize.height * 0.20 * 0.25,
+                                          width: screenSize.width / 3.5,
+                                          child: Row(
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 3.0, right: 1.0),
+                                                child: Icon(
+                                                  Icons.favorite,
+                                                  color: KPrimaryColor,
+                                                ),
                                               ),
-                                            ),
-                                            Text(data[index]),
-                                          ],
+                                              Text(
+                                                placeName,
+                                                style: TextStyle(
+                                                    fontFamily: 'Poppins'),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       );
                                     }),

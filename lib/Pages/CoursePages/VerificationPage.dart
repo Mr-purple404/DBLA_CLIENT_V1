@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison, avoid_print
 
 import 'dart:convert';
 import 'dart:io';
@@ -27,6 +27,8 @@ class VerificationPage extends StatefulWidget {
 
 class _VerificationPageState extends State<VerificationPage> {
   TextEditingController searchController = TextEditingController();
+  TextEditingController distanceController = TextEditingController();
+  TextEditingController slugController = TextEditingController();
   LatLng? latLng;
   LatLng? latLng200;
   Position? currentPosition;
@@ -91,6 +93,8 @@ class _VerificationPageState extends State<VerificationPage> {
     print(" position : $currentPosition");
     markerInitial2();
     markerInitial();
+    getDistanceonly(position1.latitude, position1.longitude, position2.latitude,
+        position2.longitude);
   }
 
   // geocoding api  --debut
@@ -142,6 +146,17 @@ class _VerificationPageState extends State<VerificationPage> {
       }
     } catch (e) {
       print('Erreur lors de la récupération des données : $e');
+    }
+  }
+
+  Future<void> storeTmp(String distance, String slug) async {
+    try {
+      await storage.write(key: "distanceStocker", value: distance);
+      await storage.write(key: "slug", value: slug);
+
+      print("distance $distance et slug $slug enregistré");
+    } catch (e) {
+      print("erreur lors du stockage des clé => $e");
     }
   }
 
@@ -206,6 +221,39 @@ class _VerificationPageState extends State<VerificationPage> {
         ],
       ),
     );
+  }
+
+  Future<void> getDistanceonly(
+      double firstLat, double firstLong, double endLat, double endLong) async {
+    try {
+      final distanceApi =
+          "https://api.mapbox.com/directions/v5/mapbox/driving-traffic/$firstLong%2C$firstLat%3B$endLong%2C$endLat?alternatives=true&geometries=polyline&language=fr&overview=simplified&roundabout_exits=true&steps=true&voice_instructions=true&voice_units=metric&access_token=$mapboxKey";
+      final response = await http.get(Uri.parse(distanceApi));
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        final duration = decodedResponse['routes'][0]['duration_typical'];
+        final distance = decodedResponse['routes'][0]['distance'];
+        final heures = duration ~/ 3600;
+        final reste =
+            duration % 3600; // Division entière pour obtenir les heures
+        final minutes =
+            reste ~/ 60; // Division entière pour obtenir les minutes
+        final secondes = reste % 60; // Le reste est en secondes
+        final seconde = secondes.toStringAsFixed(0);
+        print('Durée : ${heures}h ${minutes}min ${seconde}s');
+        print('duree => $duration');
+        final durreeReel = distance / 1000;
+        final tempsF = durreeReel.toStringAsFixed(1);
+        print('distance => $distance');
+        print('tempF => $tempsF');
+        setState(() {
+          distanceController.text = tempsF;
+        });
+      } else {}
+    } catch (error) {
+      print('erreur lors de la reccuperation de l\'api de distance => $error');
+    }
   }
 
   @override
@@ -291,7 +339,7 @@ class _VerificationPageState extends State<VerificationPage> {
   @override
   Widget build(BuildContext context) {
     Size screenSize = calculateScreenSize(context);
-    // final globalVariableModel = Provider.of<GlobalVariableModel>(context);
+    final globalVariableModel = Provider.of<GlobalVariableModel>(context);
     return Scaffold(
       // appBar: AppBar(),
       backgroundColor: KPrimaryColor,
@@ -422,7 +470,8 @@ class _VerificationPageState extends State<VerificationPage> {
                                           borderRadius: BorderRadius.all(
                                               Radius.circular(50))),
                                       child: TextField(
-                                        controller: searchController,
+                                        readOnly: true,
+                                        controller: distanceController,
                                         decoration: InputDecoration(
                                             hintText: '',
                                             border: OutlineInputBorder(
@@ -570,6 +619,7 @@ class _VerificationPageState extends State<VerificationPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextFormField(
+                                  controller: slugController,
                                   minLines: 2,
                                   maxLines: 3,
                                   keyboardType: TextInputType.multiline,
@@ -600,12 +650,24 @@ class _VerificationPageState extends State<VerificationPage> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                ConfirmPage()),
-                                      );
+                                      if (slugController.text.isEmpty) {
+                                        storeTmp(distanceController.text, "");
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ConfirmPage()),
+                                        );
+                                      } else {
+                                        storeTmp(distanceController.text,
+                                            slugController.text);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ConfirmPage()),
+                                        );
+                                      }
                                     },
                                     child: Text(
                                       ' Confirmer',
