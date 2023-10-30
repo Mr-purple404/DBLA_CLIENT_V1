@@ -26,6 +26,7 @@ class RacePage extends StatefulWidget {
 
 class _RacePageState extends State<RacePage> {
   TextEditingController searchController = TextEditingController();
+  TextEditingController arrivalPhoneController = TextEditingController();
   Position? currentPosition;
   List<Marker> markers = [];
   List<Marker> markerInit = [];
@@ -66,6 +67,9 @@ class _RacePageState extends State<RacePage> {
 
 // debut favoris code
   List<FavPostionClass> favList = []; // une liste pour l'extraction
+
+  var message = "";
+
   Future<void> getFavoriteList() async {
     try {
       const String apiUrl = "http://$ipAdress:8080/dbapp/location/";
@@ -120,6 +124,8 @@ class _RacePageState extends State<RacePage> {
         var long2 = LatLng(latitude, longitude).longitude;
         val2 = LatLng(lat2, long2);
         storeDataInLocalStorage2(lat2, long2);
+        viewInfoAdresse(lat2, long2);
+        storeArrival(arrivalPhoneController.text, placename);
       } else {
         if (!pos2Vald) {
           markerInit.clear();
@@ -142,14 +148,38 @@ class _RacePageState extends State<RacePage> {
           var long1 = LatLng(latitude, longitude).longitude;
           val1 = LatLng(lat1, long1);
           storeDataInLocalStorage(lat1, long1);
-
+          viewInfoAdresse(lat1, long1);
+          storeDeparture(placename);
           // valeur stoker
         }
       }
     }
   }
-// fin favoris code
 
+// fin favoris code
+  Future<void> storeArrival(String phone, String adresse) async {
+    try {
+      await storage.write(key: "arrival_phone", value: phone);
+      await storage.write(key: "arrival_adresse", value: adresse);
+
+      print("phone $phone et adresse $adresse enregistré");
+    } catch (e) {
+      print("erreur lors du stockage des clé => $e");
+    }
+  }
+
+  Future<void> storeDeparture(String adresseD) async {
+    try {
+      await storage.write(key: "departure_adresse", value: adresseD);
+
+      print(" adresse $adresseD enregistré");
+    } catch (e) {
+      print("erreur lors du stockage des clé => $e");
+    }
+  }
+
+  double lat1 = LatLng(0.0, 0.0).latitude;
+  double long1 = LatLng(0.0, 0.0).longitude;
   Future<void> getCurrentLocation() async {
     final permission = await Geolocator.requestPermission();
 
@@ -170,7 +200,10 @@ class _RacePageState extends State<RacePage> {
 
       isLoading = false;
       val1 = center;
+      lat1 = currentPosition!.latitude;
+      long1 = currentPosition!.longitude;
     });
+
     print(" centre : $center");
     print(" position : $currentPosition");
     markerInitial2();
@@ -396,6 +429,15 @@ class _RacePageState extends State<RacePage> {
     }
   }
 
+  void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = calculateScreenSize(context);
@@ -491,8 +533,8 @@ class _RacePageState extends State<RacePage> {
                                       10; // Ajustez la valeur en conséquence
                                 }
                                 isInfoWindowVisible = true;
-                                var lat1 = latLng.latitude;
-                                var long1 = latLng.longitude;
+                                lat1 = latLng.latitude;
+                                long1 = latLng.longitude;
                                 val1 = LatLng(lat1, long1);
                                 storeDataInLocalStorage(lat1, long1);
 
@@ -582,358 +624,345 @@ class _RacePageState extends State<RacePage> {
                   (BuildContext context, ScrollController scrollcontroller) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Container(
-                    height: screenSize.height * 0.10,
-                    color: Kwhite,
-                    child: ListView(
-                      controller: scrollcontroller,
-                      physics: ClampingScrollPhysics(),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              iconCustommer,
-                              Expanded(
-                                  child: Text(
-                                custommerText,
-                                style: TextStyle(
-                                    fontFamily: 'Poppins', fontSize: 20),
-                              )),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                          child: Container(
-                            height: screenSize.height / 15,
-                            decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(50))),
-                            child: TextField(
-                              focusNode: focusNode,
-                              controller: searchController,
-                              onChanged: (query) {
-                                if (query.isNotEmpty) {
-                                  searchPlace(query);
-                                } else {
-                                  setState(() {
-                                    searchResults = [];
-                                  });
-                                }
-                              },
-                              decoration: InputDecoration(
-                                  hintText: '',
-                                  prefixIcon: Icon(Icons.search),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(50)))),
-                            ),
-                          ),
-                        ),
-                        if (searchController.text.isEmpty)
-                          Column(
-                            children: [
-                              SizedBox(
-                                height: screenSize.height * 0.20 * 0.50,
-                                width: screenSize.width,
-                                child: ListView.builder(
-                                    itemCount: favList.length,
-                                    scrollDirection: Axis.horizontal,
-                                    itemBuilder: (context, index) {
-                                      final result = favList[index];
-                                      final placeName = result.name;
-                                      final latitude = result.latitude;
-                                      final longitude = result.longitude;
-                                      final latitudeF = double.parse(latitude);
-                                      final longitudeF =
-                                          double.parse(longitude);
-                                      return InkWell(
-                                        onTap: () {
-                                          tapFavorite(latitudeF, longitudeF);
-                                        },
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade300,
-                                            borderRadius:
-                                                BorderRadius.circular(15.0),
-                                          ),
-                                          margin: EdgeInsets.all(8.0),
-                                          height:
-                                              screenSize.height * 0.20 * 0.25,
-                                          width: screenSize.width / 3.5,
-                                          child: Row(
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 3.0, right: 1.0),
-                                                child: Icon(
-                                                  Icons.favorite,
-                                                  color: KPrimaryColor,
-                                                ),
-                                              ),
-                                              Text(
-                                                placeName,
-                                                style: TextStyle(
-                                                    fontFamily: 'Poppins'),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                              ),
-                              Center(
-                                  child: Text(
-                                'Numéro du destinataire',
-                                style: TextStyle(fontFamily: 'Poppins'),
-                              )),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 8.0, right: 8.0, bottom: 10.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade400,
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(50))),
-                                  child: TextField(
-                                    // controller: searchController,
-                                    decoration: InputDecoration(
-                                      prefixIcon: Icon(
-                                        Icons.phone_android,
-                                        color: Colors.green,
-                                        size: 35,
-                                      ),
-                                      hintText: '98647161',
-                                      hintStyle: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(50))),
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 60.0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: screenSize.width,
-                                height: screenSize.height * 0.20 * 0.80,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                        flex: 2,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(5.0),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: kBoxColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(15.0),
-                                            ),
-                                            width: screenSize.width * 0.60,
-                                            height:
-                                                screenSize.height * 0.20 * 0.80,
-                                            child: Row(
-                                              children: [
-                                                SizedBox(
-                                                    child: Column(
-                                                  children: [
-                                                    Text("Lomé-$placename"),
-                                                    Text("Lomé-$placename"),
-                                                  ],
-                                                )),
-                                                Spacer(),
-                                                IconButton(
-                                                    onPressed: null,
-                                                    icon: Icon(Icons.close))
-                                              ],
-                                            ),
-                                          ),
-                                        )),
-                                    Padding(
-                                        padding: EdgeInsets.only(right: 5.0)),
-                                    Expanded(
-                                        child: Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      child: Column(
-                                        children: [
-                                          if (!pos1Vald)
-                                            SizedBox(
-                                              height: screenSize.height *
-                                                  0.20 *
-                                                  0.70,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: kbtnColor,
-                                                  foregroundColor: kBlack,
-                                                  elevation:
-                                                      4, // Définir l'élévation ici
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0), // Définir la forme du bouton ici
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    pos1Vald = true;
-                                                    iconCustommer = iconMe;
-                                                    custommerText = textMe;
-                                                    pos2Vald = false;
-                                                  });
-                                                },
-                                                child: Text(
-                                                  'confirmer',
-                                                  style:
-                                                      TextStyle(fontSize: 12),
-                                                ),
-                                              ),
-                                            ),
-                                          if (pos1Vald && pos2Vald == false)
-                                            SizedBox(
-                                              height: screenSize.height *
-                                                  0.20 *
-                                                  0.70,
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: kbtnColor,
-                                                  foregroundColor: kBlack,
-                                                  elevation:
-                                                      4, // Définir l'élévation ici
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0), // Définir la forme du bouton ici
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    pos1Vald = true;
-                                                    pos2Vald = true;
-                                                  });
-                                                },
-                                                child: Text(
-                                                  'confirmer',
-                                                  style:
-                                                      TextStyle(fontSize: 12),
-                                                ),
-                                              ),
-                                            ),
-                                          if (pos1Vald && pos2Vald == true)
-                                            SizedBox(
-                                              height: screenSize.height *
-                                                  0.20 *
-                                                  0.70,
-                                              child: ElevatedButton(
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor: kbtnColor,
-                                                    foregroundColor: kBlack,
-                                                    elevation:
-                                                        4, // Définir l'élévation ici
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0), // Définir la forme du bouton ici
-                                                    ),
-                                                  ),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              VerificationPage()),
-                                                    );
-                                                  },
-                                                  child:
-                                                      Text('Valider course')),
-                                            )
-                                        ],
-                                      ),
-                                    )),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        if (searchResults.isNotEmpty)
-                          SizedBox(
-                            height: screenSize.height * 0.30,
-                            child: ListView.builder(
-                              controller: scrollcontroller,
-                              itemCount: searchResults.length,
-                              itemBuilder: (context, index) {
-                                final suggestion = searchResults[index];
-                                final name = suggestion['name'];
-                                final category = suggestion['feature_type'];
-                                final context = suggestion["context"];
-                                final country = context["country"];
-                                final country_name =
-                                    country?["name"] ?? "pas de pays";
-                                // return Card(
-                                //   child: ListTile(
-                                //     title: Text(name),
-                                //     subtitle: Text(country_name),
-                                //     onTap: () {
-                                //       setState(() {
-                                //         searchController.text = "";
-                                //       });
-                                //     },
-                                //   ),
-                                // );
-
-                                return Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          goePlace(name);
-                                          searchController.text = "";
-                                          focusNode.unfocus();
-                                        },
-                                        child: Container(
-                                          child: Row(
-                                            children: [
-                                              Column(
-                                                children: [
-                                                  Text(
-                                                    name,
-                                                    style: TextStyle(
-                                                        fontFamily: 'Poppins'),
-                                                  ),
-                                                  Text(
-                                                    "Lomé-$country_name",
-                                                    style: TextStyle(
-                                                        fontFamily: 'Poppins'),
-                                                  ),
-                                                ],
-                                              ),
-                                              Spacer(),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      Divider(
-                                        height: 2,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+                  child: containerDown(screenSize, scrollcontroller, context),
                 );
               })
+        ],
+      ),
+    );
+  }
+
+  Container containerDown(Size screenSize, ScrollController scrollcontroller,
+      BuildContext context) {
+    return Container(
+      height: screenSize.height * 0.10,
+      color: Kwhite,
+      child: ListView(
+        controller: scrollcontroller,
+        physics: ClampingScrollPhysics(),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                iconCustommer,
+                Expanded(
+                    child: Text(
+                  custommerText,
+                  style: TextStyle(fontFamily: 'Poppins', fontSize: 20),
+                )),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+            child: Container(
+              height: screenSize.height / 15,
+              decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.all(Radius.circular(50))),
+              child: TextField(
+                focusNode: focusNode,
+                controller: searchController,
+                onChanged: (query) {
+                  if (query.isNotEmpty) {
+                    searchPlace(query);
+                  } else {
+                    setState(() {
+                      searchResults = [];
+                    });
+                  }
+                },
+                decoration: InputDecoration(
+                    hintText: '',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(50)))),
+              ),
+            ),
+          ),
+          if (searchController.text.isEmpty)
+            Column(
+              children: [
+                SizedBox(
+                  height: screenSize.height * 0.20 * 0.50,
+                  width: screenSize.width,
+                  child: ListView.builder(
+                      itemCount: favList.length,
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, index) {
+                        final result = favList[index];
+                        final placeName = result.name;
+                        final latitude = result.latitude;
+                        final longitude = result.longitude;
+                        final latitudeF = double.parse(latitude);
+                        final longitudeF = double.parse(longitude);
+                        return InkWell(
+                          onTap: () {
+                            tapFavorite(latitudeF, longitudeF);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            margin: EdgeInsets.all(8.0),
+                            height: screenSize.height * 0.20 * 0.25,
+                            width: screenSize.width / 3.5,
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 3.0, right: 1.0),
+                                  child: Icon(
+                                    Icons.favorite,
+                                    color: KPrimaryColor,
+                                  ),
+                                ),
+                                Text(
+                                  placeName,
+                                  style: TextStyle(fontFamily: 'Poppins'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                ),
+                Center(
+                    child: Text(
+                  'Numéro du destinataire',
+                  style: TextStyle(fontFamily: 'Poppins'),
+                )),
+                Padding(
+                  padding: const EdgeInsets.only(
+                      left: 8.0, right: 8.0, bottom: 10.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.all(Radius.circular(50))),
+                    child: TextField(
+                      controller: arrivalPhoneController,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(
+                          Icons.phone_android,
+                          color: Colors.green,
+                          size: 35,
+                        ),
+                        hintText: '98647161',
+                        hintStyle: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(50))),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 60.0),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: screenSize.width,
+                  height: screenSize.height * 0.20 * 0.80,
+                  child: Row(
+                    children: [
+                      Expanded(
+                          flex: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(5.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: kBoxColor,
+                                borderRadius: BorderRadius.circular(15.0),
+                              ),
+                              width: screenSize.width * 0.60,
+                              height: screenSize.height * 0.20 * 0.80,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                      child: Column(
+                                    children: [
+                                      Text("Lomé-$placename"),
+                                      Text("Lomé-$placename"),
+                                    ],
+                                  )),
+                                  Spacer(),
+                                  IconButton(
+                                      onPressed: null, icon: Icon(Icons.close))
+                                ],
+                              ),
+                            ),
+                          )),
+                      Padding(padding: EdgeInsets.only(right: 5.0)),
+                      Expanded(
+                          child: Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Column(
+                          children: [
+                            if (!pos1Vald)
+                              SizedBox(
+                                height: screenSize.height * 0.20 * 0.70,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kbtnColor,
+                                    foregroundColor: kBlack,
+                                    elevation: 4, // Définir l'élévation ici
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          10.0), // Définir la forme du bouton ici
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    if (arrivalPhoneController.text.isEmpty) {
+                                      setState(() {
+                                        message =
+                                            "Veuillez remplir le champ du numero";
+                                      });
+                                      _showSnackbar(context, message);
+                                    } else {
+                                      setState(() {
+                                        pos1Vald = true;
+                                        iconCustommer = iconMe;
+                                        custommerText = textMe;
+                                        pos2Vald = false;
+                                        storeArrival(
+                                            arrivalPhoneController.text,
+                                            placename);
+                                        isInfoWindowVisible = false;
+                                        viewInfoAdresse(lat1, long1);
+                                      });
+                                    }
+                                  },
+                                  child: Text(
+                                    'confirmer',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                            if (pos1Vald && pos2Vald == false)
+                              SizedBox(
+                                height: screenSize.height * 0.20 * 0.70,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kbtnColor,
+                                    foregroundColor: kBlack,
+                                    elevation: 4, // Définir l'élévation ici
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          10.0), // Définir la forme du bouton ici
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      debugPrint(placename);
+                                      pos1Vald = true;
+                                      pos2Vald = true;
+                                      storeDeparture(placename);
+                                    });
+                                  },
+                                  child: Text(
+                                    'confirmer',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                            if (pos1Vald && pos2Vald == true)
+                              SizedBox(
+                                height: screenSize.height * 0.20 * 0.70,
+                                child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: kbtnColor,
+                                      foregroundColor: kBlack,
+                                      elevation: 4, // Définir l'élévation ici
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                            10.0), // Définir la forme du bouton ici
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                VerificationPage()),
+                                      );
+                                    },
+                                    child: Text('Valider course')),
+                              )
+                          ],
+                        ),
+                      )),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          if (searchResults.isNotEmpty)
+            SizedBox(
+              height: screenSize.height * 0.30,
+              child: ListView.builder(
+                controller: scrollcontroller,
+                itemCount: searchResults.length,
+                itemBuilder: (context, index) {
+                  final suggestion = searchResults[index];
+                  final name = suggestion['name'];
+                  final category = suggestion['feature_type'];
+                  final context = suggestion["context"];
+                  final country = context["country"];
+                  final country_name = country?["name"] ?? "pas de pays";
+                  // return Card(
+                  //   child: ListTile(
+                  //     title: Text(name),
+                  //     subtitle: Text(country_name),
+                  //     onTap: () {
+                  //       setState(() {
+                  //         searchController.text = "";
+                  //       });
+                  //     },
+                  //   ),
+                  // );
+
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            goePlace(name);
+                            searchController.text = "";
+                            focusNode.unfocus();
+                          },
+                          child: Container(
+                            child: Row(
+                              children: [
+                                Column(
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: TextStyle(fontFamily: 'Poppins'),
+                                    ),
+                                    Text(
+                                      "Lomé-$country_name",
+                                      style: TextStyle(fontFamily: 'Poppins'),
+                                    ),
+                                  ],
+                                ),
+                                Spacer(),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Divider(
+                          height: 2,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );

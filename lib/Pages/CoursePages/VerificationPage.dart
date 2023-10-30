@@ -29,6 +29,9 @@ class _VerificationPageState extends State<VerificationPage> {
   TextEditingController searchController = TextEditingController();
   TextEditingController distanceController = TextEditingController();
   TextEditingController slugController = TextEditingController();
+  TextEditingController depPhoneController =
+      TextEditingController(); // departure phone champ
+
   LatLng? latLng;
   LatLng? latLng200;
   Position? currentPosition;
@@ -533,84 +536,32 @@ class _VerificationPageState extends State<VerificationPage> {
                             ),
                             Padding(
                               padding: const EdgeInsets.all(4.0),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          'image colis ',
-                                          style:
-                                              TextStyle(fontFamily: 'Poppins'),
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 8.0),
-                                          child: InkWell(
-                                            child: Container(
-                                              height: screenSize.height / 5,
-                                              width: screenSize.width / 3,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade300,
-                                              ),
-                                              child: imagepath != null
-                                                  ? FullScreenWidget(
-                                                      backgroundColor:
-                                                          Colors.red,
-                                                      backgroundIsTransparent:
-                                                          true,
-                                                      disposeLevel:
-                                                          DisposeLevel.High,
-                                                      child: Image.file(
-                                                        imagepath!,
-                                                        fit: BoxFit.cover,
-                                                      ))
-                                                  : InkWell(
-                                                      onTap: () {
-                                                        showdialog();
-                                                      },
-                                                      child:
-                                                          Icon(Icons.camera)),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: Colors.grey.shade400,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(50))),
+                                child: TextField(
+                                  controller: depPhoneController,
+                                  decoration: InputDecoration(
+                                    prefixIcon: Icon(
+                                      Icons.phone_android,
+                                      color: Colors.green,
+                                      size: 35,
                                     ),
-                                  ),
-                                  // Padding(padding: EdgeInsets.all(8.0)),
-
-                                  Expanded(
-                                    flex: 2,
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          "course programée",
-                                          style:
-                                              TextStyle(fontFamily: 'Poppins'),
-                                        ),
-                                        Container(
-                                          height: screenSize.height / 15,
-                                          width: screenSize.width / 2.5,
-                                          decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(50))),
-                                          child: TextField(
-                                            controller: searchController,
-                                            decoration: InputDecoration(
-                                                hintText: '',
-                                                border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                50)))),
-                                          ),
-                                        ),
-                                      ],
+                                    hintText: '98647161',
+                                    hintStyle: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400,
                                     ),
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(50))),
+                                    contentPadding:
+                                        EdgeInsets.symmetric(horizontal: 60.0),
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                             SizedBox(

@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison, use_build_context_synchronously
 
 import 'dart:convert';
 import 'dart:io';
@@ -51,6 +51,17 @@ class _ConfirmPageState extends State<ConfirmPage> {
   double infoWindowTop = 0.0;
   final FocusNode focusNode = FocusNode();
   var placename = "";
+  bool? ischecked = false;
+  var message = '';
+  LatLng position1 =
+      LatLng(0.0, 0.0); // Variable pour stocker la LatLng récupérée
+  LatLng position2 = LatLng(0.0, 0.0);
+  var distanceF = "";
+  var slugF = "";
+  File? imagepath;
+  ImagePicker imagePicker = ImagePicker();
+
+  TextEditingController codeController = TextEditingController();
 
   Future<void> getCurrentLocation() async {
     final permission = await Geolocator.requestPermission();
@@ -79,13 +90,6 @@ class _ConfirmPageState extends State<ConfirmPage> {
     markerInitial();
   }
 
-  // geocoding api  --debut
-
-  // geocoding api  --fin
-
-  LatLng position1 =
-      LatLng(0.0, 0.0); // Variable pour stocker la LatLng récupérée
-  LatLng position2 = LatLng(0.0, 0.0);
   final storage = FlutterSecureStorage();
   Future<void> _loadLatLngFromStorage() async {
     try {
@@ -131,8 +135,6 @@ class _ConfirmPageState extends State<ConfirmPage> {
     }
   }
 
-  var distanceF = "";
-  var slugF = "";
   Future<void> loadVal() async {
     try {
       final distance = await storage.read(key: 'distanceStocker');
@@ -151,9 +153,6 @@ class _ConfirmPageState extends State<ConfirmPage> {
       print('Erreur lors de la récupération des données : $e');
     }
   }
-
-  File? imagepath;
-  ImagePicker imagePicker = ImagePicker();
 
   Future<void> getImage() async {
     var getimage = await imagePicker.pickImage(source: ImageSource.gallery);
@@ -213,18 +212,6 @@ class _ConfirmPageState extends State<ConfirmPage> {
         ],
       ),
     );
-  }
-
-  bool? ischecked = false;
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    getCurrentLocation();
-    // getPosition1FromStorage();
-    _loadLatLngFromStorage();
-    _loadLatLngFromStorage2();
-    loadVal();
   }
 
   void markerInitial() {
@@ -297,7 +284,6 @@ class _ConfirmPageState extends State<ConfirmPage> {
     }
   }
 
-  var message = '';
   void _showSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -314,6 +300,66 @@ class _ConfirmPageState extends State<ConfirmPage> {
         message = 'Aucune image sélectionnée.';
       });
       _showSnackbar(context, message);
+    } else if (ischecked! && codeController.text.isEmpty) {
+      print("Veuillez remplr le champ code promo");
+      setState(() {
+        message = 'Veuillez remplr le champ code promo.';
+      });
+      _showSnackbar(context, message);
+      return;
+    } else if (ischecked! && codeController.text.isNotEmpty) {
+      try {
+        final String? accessToken = await storage.read(key: 'access_token');
+
+        if (accessToken != null) {
+          final Map<String, String> headers = {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          };
+
+          String url = "http://$ipAdress:8080/client/tmppacketdelivery/";
+          var request = http.MultipartRequest('POST', Uri.parse(url));
+          request.headers.addAll(headers);
+          request.fields['distance'] = distanceF;
+          request.fields['slug'] = slugF;
+          request.fields['depature_latitude'] = position1.latitude.toString();
+          request.fields['depature_longitude'] = position1.longitude.toString();
+          request.fields['depature_adress'] = 'Bè-ahligo';
+          request.fields['depature_phone'] = "1234567";
+          request.fields['arrival_latitude'] = position2.latitude.toString();
+          request.fields['arrival_longitude'] = position2.longitude.toString();
+          request.fields['arrival_adress'] = 'grd Marché';
+          request.fields['arrival_phone'] = "1234567";
+          request.fields['engine'] = idE.toString();
+          request.fields['client'] = "1";
+          request.fields['code_promo'] = codeController.text;
+
+          var imageFile =
+              await http.MultipartFile.fromPath('picture', imagepath!.path);
+          request.files.add(imageFile);
+
+          var response = await request.send();
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            var responseData = await response.stream.toBytes();
+            var responseString = utf8.decode(responseData);
+            print(responseString);
+
+            setState(() {
+              message = 'image uploader avec succès';
+              imagepath = null;
+            });
+            _showSnackbar(context, message);
+          } else {
+            var responseData = await response.stream.toBytes();
+            var responseString = utf8.decode(responseData);
+            print('StatusCode => ${response.statusCode} && ${responseString} ');
+          }
+        } else {
+          print('inexistant');
+        }
+      } catch (e) {
+        print('erreur reccuperer => $e');
+      }
     } else {
       try {
         final String? accessToken = await storage.read(key: 'access_token');
@@ -345,7 +391,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
           request.files.add(imageFile);
 
           var response = await request.send();
-          if (response.statusCode == 200) {
+          if (response.statusCode == 200 || response.statusCode == 201) {
             var responseData = await response.stream.toBytes();
             var responseString = utf8.decode(responseData);
             print(responseString);
@@ -367,6 +413,16 @@ class _ConfirmPageState extends State<ConfirmPage> {
         print('erreur reccuperer => $e');
       }
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentLocation();
+    // getPosition1FromStorage();
+    _loadLatLngFromStorage();
+    _loadLatLngFromStorage2();
+    loadVal();
   }
 
   @override
@@ -496,7 +552,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                             borderRadius: BorderRadius.all(
                                                 Radius.circular(50))),
                                         child: TextField(
-                                          controller: searchController,
+                                          controller: codeController,
                                           decoration: InputDecoration(
                                               hintText: 'code promo',
                                               border: OutlineInputBorder(
