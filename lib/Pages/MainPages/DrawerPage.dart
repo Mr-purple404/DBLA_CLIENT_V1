@@ -1,6 +1,8 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:d_bla_client_v1/Constants/Constant.dart';
+import 'package:d_bla_client_v1/Pages/CoursePages/Drawers/PromoPage.dart';
+import 'package:d_bla_client_v1/Pages/CoursePages/Drawers/WalletPage.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/Signaler.dart';
 import 'package:flutter/material.dart';
 
@@ -27,6 +29,15 @@ Drawer drawerPrincipale(BuildContext context, Size screenSize) {
           ),
         ),
         ListTile(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WalletPage(),
+                fullscreenDialog: true,
+              ),
+            );
+          },
           leading: Icon(
             Icons.wallet,
             size: 35,
@@ -50,6 +61,15 @@ Drawer drawerPrincipale(BuildContext context, Size screenSize) {
         ),
         Divider(),
         ListTile(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PromoPage(),
+                fullscreenDialog: true,
+              ),
+            );
+          },
           leading: Icon(
             Icons.fifteen_mp,
             size: 35,

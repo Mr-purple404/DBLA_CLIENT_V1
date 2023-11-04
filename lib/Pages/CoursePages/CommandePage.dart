@@ -44,7 +44,7 @@ class _RacePageState extends State<RacePage> {
   bool isInfoWindowVisible = false; // info si on clique sur un lieu
   bool searching = false;
   MapController mapControllerM = MapController(); // controller du map
-  // PopupController popupControllerM = PopupController();
+
   double infoWindowTop = 0.0;
   final FocusNode focusNode = FocusNode();
   var placename = "";
@@ -376,6 +376,7 @@ class _RacePageState extends State<RacePage> {
     }
   }
 
+  var placeName2 = "";
   Future<void> viewInfoAdresse(double latitude, longitude) async {
     final urlApi =
         "https://api.mapbox.com/geocoding/v5/mapbox.places/$longitude,$latitude.json?country=tg&limit=1&types=address%2Cregion%2Ccountry%2Clocality%2Cneighborhood&access_token=pk.eyJ1Ijoic2VhcmNoLW1hY2hpbmUtdXNlci0xIiwiYSI6ImNrNnJ6bDdzdzA5cnAza3F4aTVwcWxqdWEifQ.RFF7CVFKrUsZVrJsFzhRvQ";
@@ -387,9 +388,15 @@ class _RacePageState extends State<RacePage> {
       });
       if (details.isNotEmpty) {
         String text = details[0]['text'];
-        setState(() {
-          placename = text;
-        });
+        if (!pos1Vald) {
+          setState(() {
+            placename = text;
+          });
+        } else {
+          setState(() {
+            placeName2 = text;
+          });
+        }
       }
       print(
           "les donnée recucupere grace a $longitude et $latitude sont = $request ");
@@ -579,10 +586,18 @@ class _RacePageState extends State<RacePage> {
                                   children: [
                                     Row(
                                       children: [
-                                        Text(
-                                          placename,
-                                          style: TextStyle(color: Colors.black),
-                                        ),
+                                        if (!pos1Vald)
+                                          SizedBox(
+                                            child: Text(
+                                              placename,
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                            ),
+                                          ),
+                                        if (pos1Vald)
+                                          SizedBox(
+                                            child: Text(placeName2),
+                                          ),
                                         Spacer(),
                                         IconButton(
                                             onPressed: () {
@@ -781,13 +796,29 @@ class _RacePageState extends State<RacePage> {
                               height: screenSize.height * 0.20 * 0.80,
                               child: Row(
                                 children: [
-                                  SizedBox(
-                                      child: Column(
-                                    children: [
-                                      Text("Lomé-$placename"),
-                                      Text("Lomé-$placename"),
-                                    ],
-                                  )),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                        child: Column(
+                                      children: [
+                                        if (!pos1Vald) SizedBox(),
+                                        if (pos1Vald)
+                                          SizedBox(
+                                            child: Text("Lomé-$placename"),
+                                          ),
+                                        if (pos2Vald)
+                                          SizedBox(
+                                              child: Column(
+                                            children: [
+                                              SizedBox(
+                                                height: 5,
+                                              ),
+                                              Text("Lomé-$placeName2"),
+                                            ],
+                                          ))
+                                      ],
+                                    )),
+                                  ),
                                   Spacer(),
                                   IconButton(
                                       onPressed: null, icon: Icon(Icons.close))
@@ -859,7 +890,6 @@ class _RacePageState extends State<RacePage> {
                                       debugPrint(placename);
                                       pos1Vald = true;
                                       pos2Vald = true;
-                                      storeDeparture(placename);
                                     });
                                   },
                                   child: Text(
@@ -882,6 +912,7 @@ class _RacePageState extends State<RacePage> {
                                       ),
                                     ),
                                     onPressed: () {
+                                      storeDeparture(placeName2);
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -912,18 +943,6 @@ class _RacePageState extends State<RacePage> {
                   final context = suggestion["context"];
                   final country = context["country"];
                   final country_name = country?["name"] ?? "pas de pays";
-                  // return Card(
-                  //   child: ListTile(
-                  //     title: Text(name),
-                  //     subtitle: Text(country_name),
-                  //     onTap: () {
-                  //       setState(() {
-                  //         searchController.text = "";
-                  //       });
-                  //     },
-                  //   ),
-                  // );
-
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Column(

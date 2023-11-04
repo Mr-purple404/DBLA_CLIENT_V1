@@ -1,10 +1,12 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison, use_build_context_synchronously
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:d_bla_client_v1/Constants/Constant.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/ConfirmationPage.dart';
+import 'package:d_bla_client_v1/Pages/CoursePages/EndRace.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/RaceModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -16,6 +18,42 @@ import 'package:provider/provider.dart';
 // ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
 import 'package:full_screen_image/full_screen_image.dart';
+
+class DeliveryClass {
+  final int id;
+  final String distance;
+  final int engine;
+  final String price_1;
+  final String price_2;
+
+  DeliveryClass({
+    required this.id,
+    required this.distance,
+    required this.engine,
+    required this.price_1,
+    required this.price_2,
+  });
+  factory DeliveryClass.fromJson(Map<String, dynamic> json) {
+    try {
+      return DeliveryClass(
+        id: json['id'] as int,
+        distance: json['distance'] as String,
+        engine: json['engine'] as int,
+        price_1: json['price_1'] as String,
+        price_2: json['price_2'] as String,
+      );
+    } catch (e) {
+      print('Erreur de désérialisation : $e');
+      return DeliveryClass(
+        id: 0,
+        engine: 0,
+        price_1: '',
+        price_2: '',
+        distance: '',
+      );
+    }
+  }
+}
 
 class ConfirmPage extends StatefulWidget {
   const ConfirmPage({
@@ -58,6 +96,12 @@ class _ConfirmPageState extends State<ConfirmPage> {
   LatLng position2 = LatLng(0.0, 0.0);
   var distanceF = "";
   var slugF = "";
+  var numberA = "";
+  var arrivalA = "";
+  var arrivalP = "";
+  var depAdre = "";
+  String price2Final = '';
+  int idFinal = 0;
   File? imagepath;
   ImagePicker imagePicker = ImagePicker();
 
@@ -138,14 +182,28 @@ class _ConfirmPageState extends State<ConfirmPage> {
   Future<void> loadVal() async {
     try {
       final distance = await storage.read(key: 'distanceStocker');
+      final numberdep = await storage.read(key: 'numberdep');
+      final depAdresse = await storage.read(key: 'departure_adresse');
+      final arrivalAdresse = await storage.read(key: 'arrival_adresse');
+      final arrivalPhone = await storage.read(key: 'arrival_phone');
       final slug = await storage.read(key: 'slug');
 
-      if (distance != null && slug != null) {
+      if (distance != null &&
+          slug != null &&
+          depAdresse != null &&
+          arrivalAdresse != null &&
+          arrivalPhone != null &&
+          numberdep != null) {
         setState(() {
           distanceF = distance;
           slugF = slug;
+          numberA = numberdep;
+          arrivalA = arrivalAdresse;
+          arrivalP = arrivalPhone;
+          depAdre = depAdresse;
         });
-        print("distance => $distance && slug => $slug");
+        print(
+            "distance => $distance && slug => $slug => $numberdep adresse => $depAdresse || $arrivalPhone ||$arrivalAdresse ||");
       } else {
         print('Variable null');
       }
@@ -377,12 +435,12 @@ class _ConfirmPageState extends State<ConfirmPage> {
           request.fields['slug'] = slugF;
           request.fields['depature_latitude'] = position1.latitude.toString();
           request.fields['depature_longitude'] = position1.longitude.toString();
-          request.fields['depature_adress'] = 'Bè-ahligo';
-          request.fields['depature_phone'] = "1234567";
+          request.fields['depature_adress'] = depAdre;
+          request.fields['depature_phone'] = numberA;
           request.fields['arrival_latitude'] = position2.latitude.toString();
           request.fields['arrival_longitude'] = position2.longitude.toString();
-          request.fields['arrival_adress'] = 'grd Marché';
-          request.fields['arrival_phone'] = "1234567";
+          request.fields['arrival_adress'] = arrivalA;
+          request.fields['arrival_phone'] = arrivalP;
           request.fields['engine'] = idE.toString();
           request.fields['client'] = "1";
 
@@ -396,8 +454,42 @@ class _ConfirmPageState extends State<ConfirmPage> {
             var responseString = utf8.decode(responseData);
             print(responseString);
 
+            var jsonData = jsonDecode(responseString);
+            if (jsonData != null) {
+              var delivery = DeliveryClass.fromJson(jsonData);
+
+              // Vous pouvez maintenant accéder aux propriétés de la classe
+              int id = delivery.id;
+              String distance = delivery.distance;
+
+              String price1 = delivery.price_1;
+              String price2 = delivery.price_2;
+
+              setState(() {
+                price2Final = price2;
+                idFinal = id;
+                // final globalVariableModel =
+                //     Provider.of<GlobalVariableModel>(context, listen: false);
+                // globalVariableModel.setIdRacing(idFinal);
+                final globalVariableModel =
+                    Provider.of<GlobalVariableModel>(context, listen: false);
+                globalVariableModel.setIdRacing(idFinal);
+                globalVariableModel.setPrice(price2Final);
+              });
+              print(idFinal);
+
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => EndRacePage()));
+              // Utilisez ces valeurs comme vous le souhaitez
+            } else {
+              // Gérez le cas où la désérialisation a échoué
+              print("Erreur de désérialisation : $jsonData est null");
+            }
+
+            // 'print(responseString);'
+
             setState(() {
-              message = 'image uploader avec succès';
+              message = 'Paramètres envoyé veuillez valider la course';
               imagepath = null;
             });
             _showSnackbar(context, message);
@@ -416,6 +508,12 @@ class _ConfirmPageState extends State<ConfirmPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+  }
+
+  @override
   void initState() {
     super.initState();
     getCurrentLocation();
@@ -425,6 +523,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
     loadVal();
   }
 
+  late Timer _timer;
   @override
   Widget build(BuildContext context) {
     Size screenSize = calculateScreenSize(context);
@@ -608,7 +707,6 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                                 borderRadius: BorderRadius.all(
                                                     Radius.circular(50))),
                                             child: TextField(
-                                              controller: searchController,
                                               decoration: InputDecoration(
                                                   hintText: '8km',
                                                   border: OutlineInputBorder(
@@ -671,6 +769,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                     child: Column(
                                       children: [
                                         InkWell(
+                                          onTap: () {},
                                           child: Text(
                                             "course programée",
                                             style: TextStyle(
@@ -724,7 +823,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                       onload(globalVariableModel.idRace);
                                     },
                                     child: Text(
-                                      ' Lancer la course',
+                                      'Valider paramètres',
                                       style: TextStyle(
                                           fontFamily: 'Poppins', fontSize: 25),
                                     )),

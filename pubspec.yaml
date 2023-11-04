@@ -47,7 +47,7 @@ dependencies:
   firebase_core: ^2.17.0
   firebase_messaging: ^14.6.9
   firebase_analytics: ^10.5.1
-  dart_geohash: ^2.0.2
+  
   
 
 dev_dependencies:

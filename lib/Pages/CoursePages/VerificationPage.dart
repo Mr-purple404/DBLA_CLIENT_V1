@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison, avoid_print
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_null_comparison, avoid_print, unused_local_variable
 
 import 'dart:convert';
 import 'dart:io';
@@ -55,6 +55,7 @@ class _VerificationPageState extends State<VerificationPage> {
   double infoWindowTop = 0.0;
   final FocusNode focusNode = FocusNode();
   var placename = "";
+  var message = "";
   // text et icon
   // debut
 //  ion et text e changeable si on valide une position
@@ -71,6 +72,7 @@ class _VerificationPageState extends State<VerificationPage> {
   );
   var textMe = "Adresse de départ";
 // fin
+
   Future<void> getCurrentLocation() async {
     final permission = await Geolocator.requestPermission();
 
@@ -101,7 +103,14 @@ class _VerificationPageState extends State<VerificationPage> {
   }
 
   // geocoding api  --debut
-
+  void _showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
   // geocoding api  --fin
 
   LatLng position1 =
@@ -152,12 +161,13 @@ class _VerificationPageState extends State<VerificationPage> {
     }
   }
 
-  Future<void> storeTmp(String distance, String slug) async {
+  Future<void> storeTmp(String distance, String slug, String numnberDep) async {
     try {
       await storage.write(key: "distanceStocker", value: distance);
       await storage.write(key: "slug", value: slug);
+      await storage.write(key: "numberdep", value: numnberDep);
 
-      print("distance $distance et slug $slug enregistré");
+      print("distance $distance et slug $slug enregistré => $numnberDep");
     } catch (e) {
       print("erreur lors du stockage des clé => $e");
     }
@@ -457,63 +467,33 @@ class _VerificationPageState extends State<VerificationPage> {
                           padding: const EdgeInsets.all(4.0),
                           child: Row(
                             children: [
-                              Expanded(
-                                flex: 1,
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'Distance',
-                                      style: TextStyle(fontFamily: 'Poppins'),
+                              Column(
+                                children: [
+                                  Text(
+                                    'Distance',
+                                    style: TextStyle(fontFamily: 'Poppins'),
+                                  ),
+                                  Container(
+                                    height: screenSize.height / 15,
+                                    width: screenSize.width / 4,
+                                    decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(50))),
+                                    child: TextField(
+                                      readOnly: true,
+                                      controller: distanceController,
+                                      decoration: InputDecoration(
+                                          hintText: '',
+                                          border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(50)))),
                                     ),
-                                    Container(
-                                      height: screenSize.height / 15,
-                                      width: screenSize.width / 4,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(50))),
-                                      child: TextField(
-                                        readOnly: true,
-                                        controller: distanceController,
-                                        decoration: InputDecoration(
-                                            hintText: '',
-                                            border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(50)))),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              // Padding(padding: EdgeInsets.all(8.0)),
 
-                              Expanded(
-                                flex: 2,
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      "Estimation",
-                                      style: TextStyle(fontFamily: 'Poppins'),
-                                    ),
-                                    Container(
-                                      height: screenSize.height / 15,
-                                      width: screenSize.width / 2.5,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(50))),
-                                      child: TextField(
-                                        controller: searchController,
-                                        decoration: InputDecoration(
-                                            hintText: '',
-                                            border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(50)))),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              // Padding(padding: EdgeInsets.all(8.0)),
                             ],
                           ),
                         ),
@@ -601,8 +581,15 @@ class _VerificationPageState extends State<VerificationPage> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      if (slugController.text.isEmpty) {
-                                        storeTmp(distanceController.text, "");
+                                      if (depPhoneController.text.isEmpty) {
+                                        setState(() {
+                                          message =
+                                              "Veuillez remplir le champ numero";
+                                        });
+                                        _showSnackbar(context, message);
+                                      } else if (slugController.text.isEmpty) {
+                                        storeTmp(distanceController.text, "",
+                                            depPhoneController.text);
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -610,8 +597,10 @@ class _VerificationPageState extends State<VerificationPage> {
                                                   ConfirmPage()),
                                         );
                                       } else {
-                                        storeTmp(distanceController.text,
-                                            slugController.text);
+                                        storeTmp(
+                                            distanceController.text,
+                                            slugController.text,
+                                            depPhoneController.text);
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
