@@ -6,13 +6,21 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'Pages/Class/RegisterModel.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(
-    ChangeNotifierProvider(
-      create: (context) =>
-          GlobalVariableModel(), // Créez une instance du modèle de données
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<GlobalVariableModel>(
+          create: (context) => GlobalVariableModel(),
+        ),
+        ChangeNotifierProvider<GlobalRegisterModel>(
+          create: (context) => GlobalRegisterModel(),
+        ),
+      ], // Créez une instance du modèle de données
       child: const MyApp(),
     ),
   );

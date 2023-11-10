@@ -1,8 +1,28 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:convert';
+
 import 'package:d_bla_client_v1/Constants/Constant.dart';
 import 'package:d_bla_client_v1/Pages/Login-Register/LoginPage.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+
+import '../Class/RegisterModel.dart';
+import '../Class/snackbarClass.dart';
+
+class EmailData {
+  final String mail;
+
+  EmailData(this.mail);
+
+  Map<String, dynamic> toJson() {
+    return {
+      'mail': mail,
+    };
+  }
+}
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,6 +32,14 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<RegisterPage> {
+  TextEditingController birthdayController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
+  TextEditingController firstnameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+
+  String _val = '';
+  var message = '';
+
   void goToLogin() {
     Navigator.pushReplacement(
       context,
@@ -20,6 +48,68 @@ class _LoginPageState extends State<RegisterPage> {
         fullscreenDialog: true,
       ),
     );
+  }
+
+  Future _select_full_date() async {
+    // DateTime eightyearsago = DateTime.now().subtract(Duration(days: 18 * 365));
+    DateTime initialDate = DateTime(DateTime.now().year - 18, 1, 1);
+    DateTime maxDate = DateTime(DateTime.now().year - 18, 12, 31);
+    DateTime? picker = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: maxDate,
+    );
+
+    if (picker != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(picker);
+      setState(() {
+        _val = formattedDate;
+        birthdayController.text = _val;
+      });
+    }
+  }
+
+  Future<void> sendInfo() async {
+    try {
+      const String urlSendMail = "http://$ipAdress:8080/dbapp/email/";
+      if (birthdayController.text.isEmpty ||
+          nameController.text.isEmpty ||
+          firstnameController.text.isEmpty ||
+          emailController.text.isEmpty) {
+        setState(() {
+          message = "Veuillez renseigner tout les champs";
+        });
+        SnackbarService.showSnackbar(context, message);
+      } else {
+        final Map<String, String> dataRegister = {'mail': emailController.text};
+
+        final reportData = EmailData(emailController.text);
+        final jsonData = reportData.toJson();
+        final response =
+            await http.post(Uri.parse(urlSendMail), body: dataRegister);
+        final Map<String, dynamic> responseData2 = json.decode(response.body);
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          print(responseData2);
+          setState(() {
+            message = "Donné valide";
+            final globalRegisterModel =
+                Provider.of<GlobalRegisterModel>(context, listen: false);
+            globalRegisterModel.setNameCustommer(nameController.text);
+            globalRegisterModel.setFirstNameCustommer(firstnameController.text);
+            globalRegisterModel.setDateNaissance(birthdayController.text);
+            globalRegisterModel.setEmailCustommmer(emailController.text);
+          });
+          SnackbarService.showSnackbar(context, message);
+        } else {
+          var responseString = utf8.decode(response.bodyBytes);
+          print('StatusCode => ${response.statusCode} && ${responseString} ');
+        }
+      }
+    } catch (e) {
+      debugPrint('erreur  lors de la reccupération de l\'api => $e');
+    }
   }
 
   @override
@@ -111,11 +201,12 @@ class _LoginPageState extends State<RegisterPage> {
                           padding: const EdgeInsets.only(
                               bottom: 30.0, left: 30.0, right: 30.0),
                           child: TextFormField(
+                            controller: nameController,
                             decoration: InputDecoration(
-                              hintText: 'Mot de passe',
+                              hintText: 'Nom',
                             ),
                             // keyboardType: TextInputType.emailAddress,
-                            obscureText: true,
+                            keyboardType: TextInputType.text,
                           ),
                         ),
                       ),
@@ -138,11 +229,12 @@ class _LoginPageState extends State<RegisterPage> {
                           padding: const EdgeInsets.only(
                               bottom: 30.0, left: 30.0, right: 30.0),
                           child: TextFormField(
+                            controller: firstnameController,
                             decoration: InputDecoration(
-                              hintText: 'Mot de passe',
+                              hintText: 'Prénom',
                             ),
                             // keyboardType: TextInputType.emailAddress,
-                            obscureText: true,
+                            keyboardType: TextInputType.text,
                           ),
                         ),
                       ),
@@ -165,11 +257,16 @@ class _LoginPageState extends State<RegisterPage> {
                           padding: const EdgeInsets.only(
                               bottom: 30.0, left: 30.0, right: 30.0),
                           child: TextFormField(
+                            controller: birthdayController,
                             decoration: InputDecoration(
-                              hintText: 'Mot de passe',
-                            ),
+                                hintText: 'date de naissance',
+                                suffixIcon: IconButton(
+                                    onPressed: () {
+                                      _select_full_date();
+                                    },
+                                    icon: Icon(Icons.calendar_month_outlined))),
                             // keyboardType: TextInputType.emailAddress,
-                            obscureText: true,
+                            keyboardType: TextInputType.datetime,
                           ),
                         ),
                       ),
@@ -192,6 +289,7 @@ class _LoginPageState extends State<RegisterPage> {
                           padding: const EdgeInsets.only(
                               bottom: 30.0, left: 30.0, right: 30.0),
                           child: TextFormField(
+                            controller: emailController,
                             decoration: InputDecoration(
                               hintText: 'Email',
                             ),
@@ -207,7 +305,9 @@ class _LoginPageState extends State<RegisterPage> {
                       height: screenSize.height * 0.75 * 0.09,
                     ),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        sendInfo();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kbtnColor,
                         elevation: 4, // Définir l'élévation ici

@@ -204,16 +204,15 @@ class _FirstPageState extends State<FirstPage> {
                           width: screenSize.width * 0.45,
                           decoration: BoxDecoration(
                               shape: BoxShape.rectangle,
-                              border: Border.all(color: Colors.green, width: 2),
+                              border: Border.all(color: Colors.white, width: 2),
                               borderRadius:
                                   BorderRadius.all(Radius.circular(30))),
                           child: Image.asset(
-                            "assets/images/Sodjigaz.png",
-                            // width: screenSize.width * 0.2 * 2,
-                            // height: screenSize.width * 0.2 * 0.9,
+                            "assets/images/food.png",
+                            width: screenSize.width * 0.01,
+                            height: screenSize.width * 0.2 * 0.9,
                             // width: 125,
                             // height: 125,
-                            fit: BoxFit.cover,
                           ),
                         ),
                       ),

@@ -1,10 +1,12 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, use_build_context_synchronously
 
 import 'package:d_bla_client_v1/Constants/Constant.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/Drawers/PromoPage.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/Drawers/WalletPage.dart';
 import 'package:d_bla_client_v1/Pages/CoursePages/Signaler.dart';
+import 'package:d_bla_client_v1/Pages/Login-Register/LoginPage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../CoursePages/Drawers/SettingsPage.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -110,6 +112,7 @@ Drawer drawerPrincipale(BuildContext context, Size screenSize) {
         Divider(),
         ListTile(
           onTap: () {
+            // ignore: use_build_context_synchronously
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => ReportPage()),
@@ -119,6 +122,29 @@ Drawer drawerPrincipale(BuildContext context, Size screenSize) {
             alignment: Alignment.centerRight,
             child: Text(
               "Signaler",
+              style: TextStyle(color: Kwhite),
+            ),
+          ),
+        ),
+        Divider(),
+        ListTile(
+          onTap: () async {
+            final storage = FlutterSecureStorage();
+            await storage.deleteAll();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginPage()),
+            );
+          },
+          leading: Icon(
+            Icons.exit_to_app_outlined,
+            size: 35,
+            color: Kwhite,
+          ),
+          subtitle: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              "Deconnexion",
               style: TextStyle(color: Kwhite),
             ),
           ),

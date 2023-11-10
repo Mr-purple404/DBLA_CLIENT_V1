@@ -15,7 +15,7 @@ const kBoxColor = Color(0xCC92A7BC);
 const sizebox10 = SizedBox(height: 10);
 const sizebox20 = SizedBox(height: 20);
 const sizebox30 = SizedBox(height: 30);
-const ipAdress = "191.101.81.15";
+const ipAdress = "192.168.1.70";
 const kStyle = TextStyle(fontFamily: 'Poppins');
 const mapboxKey =
     "pk.eyJ1Ijoid3Vhc3MiLCJhIjoiY2xtNTBpZmc1MWc1ejNqczZoeWw3bnh1dyJ9.RofiqR1hTvyAys4YHibAWQ";
